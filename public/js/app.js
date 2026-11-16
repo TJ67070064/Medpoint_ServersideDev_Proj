@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:5000/api/v1';
+const API_URL = '/api/v1';
 
 function getAuth() {
   const token = localStorage.getItem('medpoint_token');
@@ -35,13 +35,13 @@ async function verifySession() {
     const res = await fetch(`${API_URL}/auth/me`, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    if (!res.ok) {
+    if (res.status === 401 || res.status === 403) {
       localStorage.removeItem('medpoint_token');
       localStorage.removeItem('medpoint_user');
       if (window.location.pathname !== '/auth.html') {
         window.location.href = '/auth.html';
       }
-    } else {
+    } else if (res.ok) {
       const data = await res.json();
       localStorage.setItem('medpoint_user', JSON.stringify(data.user));
     }
@@ -56,6 +56,7 @@ function renderNavbar(activePage) {
   if (!nav) return;
 
   const isAdmin = user && user.role === 'ADMIN';
+  const canManageQueue = user && ['ADMIN', 'DOCTOR_STAFF'].includes(user.role);
 
   const linkClass = (page) =>
     activePage === page
@@ -65,7 +66,7 @@ function renderNavbar(activePage) {
   const initial = user ? user.full_name.charAt(0).toUpperCase() : '';
 
   nav.innerHTML = `
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between">
+    <div class="w-full max-w-none mx-auto px-4 sm:px-6 h-20 flex items-center justify-between">
       <div class="flex items-center gap-4">
         <button onclick="toggleMobileDrawer()" class="p-2 rounded-lg text-[#1E3A5F] hover:bg-slate-100 transition" title="เมนูเพิ่มเติม">
           <i data-lucide="menu" class="w-6 h-6 stroke-[2.3]"></i>
@@ -80,6 +81,7 @@ function renderNavbar(activePage) {
           <a href="/index.html" class="${linkClass('home')}">หน้าหลัก</a>
           <a href="/screening.html" class="${linkClass('screening')}">คัดกรองอาการ</a>
           <a href="/services.html" class="${linkClass('services')}">บริการและแพ็กเกจ</a>
+          ${canManageQueue ? `<a href="/queue.html" class="${linkClass('queue')}">จัดการคิวตรวจ</a>` : ''}
           ${
             isAdmin
               ? `
@@ -115,6 +117,7 @@ function renderNavbar(activePage) {
                   <div class="pt-2 space-y-1">
                     <a href="/services.html" class="block px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-lg">บริการและแพ็กเกจ</a>
                     <a href="/screening.html" class="block px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-lg">แบบฟอร์มคัดกรอง</a>
+                    ${canManageQueue ? '<a href="/queue.html" class="block px-3 py-2 text-sm text-[#134E6F] hover:bg-slate-50 rounded-lg">จัดการคิวตรวจ</a>' : ''}
                     ${
                       isAdmin
                         ? `
@@ -144,6 +147,7 @@ function renderNavbar(activePage) {
         <a href="/index.html" class="px-3 py-1.5 rounded-lg hover:bg-slate-100 text-slate-700">หน้าหลัก</a>
         <a href="/screening.html" class="px-3 py-1.5 rounded-lg hover:bg-slate-100 text-slate-700">คัดกรองอาการเบื้องต้น</a>
         <a href="/services.html" class="px-3 py-1.5 rounded-lg hover:bg-slate-100 text-slate-700">บริการและแพ็กเกจ</a>
+        ${canManageQueue ? '<a href="/queue.html" class="px-3 py-1.5 rounded-lg hover:bg-slate-100 text-slate-700">จัดการคิวตรวจ</a>' : ''}
         ${
           isAdmin
             ? `

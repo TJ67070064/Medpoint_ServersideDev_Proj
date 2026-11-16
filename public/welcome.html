@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="th">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#176881" />
+  <title>ยินดีต้อนรับ | MedPoint</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            mitr: ["Mitr", "Arial", "sans-serif"],
+          },
+        },
+      },
+    };
+  </script>
+</head>
+
+<body class="m-0 font-mitr">
+  <main
+    class="relative isolate grid min-h-[100svh] place-items-center overflow-hidden bg-[linear-gradient(157deg,#7BC5DF_0%,#2A8AA6_43%,#064663_100%)] px-6 py-[170px] text-white sm:py-[110px]"
+    aria-labelledby="brand">
+    <!-- จุดตกแต่ง -->
+    <div
+      class="pointer-events-none absolute left-0 top-0 -z-10 h-[45%] w-[65%] bg-[radial-gradient(#D6F2FC_1.8px,transparent_2px)] [background-size:17px_17px] [mask-image:linear-gradient(135deg,#000,transparent_75%)] opacity-30 sm:w-[34%]"
+      aria-hidden="true"></div>
+
+    <div
+      class="pointer-events-none absolute bottom-0 right-0 -z-10 h-[45%] w-[65%] bg-[radial-gradient(#D6F2FC_1.8px,transparent_2px)] [background-size:17px_17px] [mask-image:linear-gradient(315deg,#000,transparent_80%)] opacity-30 sm:w-[34%]"
+      aria-hidden="true"></div>
+
+    <!-- วงกลมตกแต่ง -->
+    <span
+      class="pointer-events-none absolute -right-[210px] -top-[240px] -z-10 h-[420px] w-[420px] rounded-full border border-[#BCF0FF]/15 after:absolute after:inset-[60px] after:rounded-full after:border after:border-[#BCF0FF]/15 after:content-['']"
+      aria-hidden="true"></span>
+
+    <span
+      class="pointer-events-none absolute -bottom-[260px] -left-[260px] -z-10 h-[420px] w-[420px] rounded-full border border-[#BCF0FF]/15 after:absolute after:inset-[60px] after:rounded-full after:border after:border-[#BCF0FF]/15 after:content-['']"
+      aria-hidden="true"></span>
+
+    <!-- เครื่องหมายบวก -->
+    <span class="pointer-events-none absolute left-[28%] top-[14%] text-[28px] font-medium text-[#C4EFF8] opacity-75"
+      aria-hidden="true">+</span>
+
+    <span class="pointer-events-none absolute right-[6%] top-[12%] text-[28px] font-medium text-[#C4EFF8] opacity-75"
+      aria-hidden="true">+</span>
+
+    <span class="pointer-events-none absolute bottom-[7%] left-1/2 text-[28px] font-medium text-[#C4EFF8] opacity-75"
+      aria-hidden="true">+</span>
+
+    <!-- กากบาทการแพทย์ -->
+    <svg
+      class="pointer-events-none absolute left-[8%] top-[13%] z-[2] w-[clamp(65px,10vw,142px)] -rotate-12 sm:left-[7%] sm:top-[20%]"
+      viewBox="0 0 110 110" aria-hidden="true">
+      <path d="M40 7h30v33h33v30H70v33H40V70H7V40h33z" fill="#FF717B" />
+      <path d="M12 56h19l7-10 10 22 9-35 12 32 7-9h23" fill="none" stroke="white" stroke-width="2.5"
+        stroke-linejoin="round" />
+    </svg>
+
+    <!-- โรงพยาบาล -->
+    <svg
+      class="pointer-events-none absolute right-[8%] top-[11%] z-[2] w-[clamp(80px,13vw,180px)] sm:right-[4%] sm:top-[19%]"
+      viewBox="0 0 140 140" aria-hidden="true">
+      <path d="M10 58h120v74H10z" fill="#E9F5FA" />
+      <path d="M38 29h64v103H38z" fill="white" />
+      <path d="M7 53h126v8H7zM36 25h68v8H36zM6 132h128v7H6z" fill="#43758C" />
+      <g fill="#B8DDED">
+        <path
+          d="M20 73h14v16H20zM20 99h14v16H20zM106 73h14v16h-14zM106 99h14v16h-14zM52 64h15v16H52zM76 64h15v16H76zM52 88h15v16H52zM76 88h15v16H76z" />
+        <path d="M57 111h27v21H57z" fill="#98C6DD" />
+      </g>
+      <circle cx="70" cy="30" r="20" fill="white" />
+      <path d="M65 17h10v8h8v10h-8v8H65v-8h-8V25h8z" fill="#F66A77" />
+    </svg>
+
+    <!-- ชื่อเว็บและปุ่ม -->
+    <section class="relative z-10 w-full translate-y-2 text-center sm:w-auto">
+      <h1 id="brand" class="mb-6 text-[60px] font-bold leading-tight text-white  [text-shadow:0_2px_0_#DDE3E5,0_5px_0_#C2D3DA,0_11px_3px_#07516C80] sm:text-[120px] lg:text-[200px]">
+        MedPoint
+      </h1>
+
+      <div class="mx-auto mt-6 flex max-w-[620px] gap-10 sm:gap-[15px]">
+        <a id="sign-in" href="/auth.html?tab=login"
+          class="grid min-h-12 min-w-0 flex-1 place-items-center rounded-full border-2 border-white bg-white px-5 text-lg font-bold text-[#101820] shadow-[0_5px_3px_#084E6A55] transition-transform hover:-translate-y-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-amber-200 motion-reduce:transition-none sm:min-h-[58px] sm:border-[3px] sm:text-[36px]">
+          Sign in
+        </a>
+
+        <a id="sign-up" href="/auth.html?tab=register"
+          class="grid min-h-12 min-w-0 flex-1 place-items-center rounded-full border-2 border-white px-5 text-lg font-bold shadow-[0_5px_3px_#084E6A55] transition hover:-translate-y-1 hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-amber-200 motion-reduce:transition-none sm:min-h-[58px] sm:border-[3px] sm:text-[36px]">
+          Sign up
+        </a>
+      </div>
+
+      <a href="/index.html" class="mt-6 inline-block text-xs text-[#E2F6FF] opacity-90 hover:underline sm:text-[24px]">
+        ดูบริการและข้อมูลคลินิก <span aria-hidden="true">→</span>
+      </a>
+    </section>
+
+    <!-- กระเป๋าการแพทย์ -->
+    <svg
+      class="pointer-events-none absolute bottom-[15%] left-[7%] z-[2] w-[clamp(72px,12vw,170px)] -rotate-[10deg] sm:bottom-[14%]"
+      viewBox="0 0 130 115" aria-hidden="true">
+      <rect x="45" y="8" width="40" height="24" rx="6" stroke="#83BDCF" stroke-width="6" fill="none" />
+      <rect x="12" y="28" width="106" height="73" rx="10" fill="white" />
+      <path d="M12 38q0-10 10-10h86q10 0 10 10v12H12z" fill="#8EBFD5" />
+      <path d="M58 54h15v15h15v15H73v15H58V84H43V69h15z" fill="#F56D7A" />
+      <path d="M58 43h15v12H58z" fill="#E2EEF5" />
+    </svg>
+
+    <!-- คลิปบอร์ด -->
+    <svg
+      class="pointer-events-none absolute bottom-[14%] right-[5%] z-[2] w-[clamp(65px,10vw,140px)] rotate-[10deg] sm:bottom-[12%]"
+      viewBox="0 0 115 145" aria-hidden="true">
+      <rect x="13" y="10" width="90" height="124" rx="8" fill="#85B9D2" />
+      <rect x="20" y="17" width="76" height="109" rx="4" fill="white" />
+      <rect x="40" y="5" width="37" height="17" rx="4" fill="#51859F" />
+      <rect x="52" y="10" width="13" height="4" rx="2" fill="#B1D5E4" />
+      <path d="M58 79C27 60 35 38 49 44q8 2 9 8 9-16 20-5 14 15-20 32" fill="#F56A78" />
+      <path d="M35 98h46M35 111h32" stroke="#9FC6DB" stroke-width="4" stroke-linecap="round" />
+    </svg>
+
+    <!-- เส้นชีพจร -->
+    <svg
+      class="pointer-events-none absolute bottom-[19%] left-0 -z-10 h-[60px] w-full text-[#8BD5E0] opacity-40 sm:bottom-[13%] sm:h-[90px]"
+      viewBox="0 0 1200 100" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M0 57h438l14-13 14 26 15-54 16 72 14-42 16 11h673" fill="none" stroke="currentColor" stroke-width="3" />
+    </svg>
+  </main>
+
+  <script src="/js/app.js"></script>
+</body>
+
+</html>

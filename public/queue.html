@@ -1,0 +1,683 @@
+<!doctype html>
+<html lang="th">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>จัดการคิวตรวจ | MedPoint</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <script>
+    window.tailwind = window.tailwind || {};
+
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            prompt: ["Prompt", "Arial", "sans-serif"],
+          },
+        },
+      },
+    };
+  </script>
+
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    [hidden] {
+      display: none !important;
+    }
+
+    /* ข้อความทั่วไป ตาราง ช่องค้นหา และปุ่ม */
+    #queue-page,
+    #queue-page :is(div, p, span, label, input, select, button, th, td, a) {
+      font-size: 16px !important;
+    }
+
+    /* หัวข้อ "จัดการคิวตรวจ" */
+    #queue-page h1 {
+      font-size: 36px !important;
+    }
+
+    /* หัวข้อในการ์ดและชื่อผู้ป่วย */
+    #queue-page h2,
+    #queue-page h3 {
+      font-size: 20px !important;
+    }
+
+    /* ตัวเลขสรุปจำนวนคิว */
+    #count-waiting,
+    #count-progress,
+    #count-completed {
+      font-size: 40px !important;
+    }
+
+    /* เลขคิวปัจจุบัน */
+    #current-queue strong {
+      font-size: 44px !important;
+    }
+
+    /* เลขคิวถัดไป */
+    #next-queue strong {
+      font-size: 32px !important;
+    }
+
+    /* ข้อความและปุ่มในหน้าต่างยืนยัน */
+    #confirm-dialog p,
+    #confirm-dialog button {
+      font-size: 16px !important;
+    }
+
+    /* หัวข้อหน้าต่างยืนยัน */
+    #confirm-dialog h2 {
+      font-size: 24px !important;
+    }
+
+    /* ข้อความแจ้งผล */
+    #toast {
+      font-size: 16px !important;
+    }
+  </style>
+</head>
+
+<body class="min-h-screen bg-[#F8FAFC] font-prompt text-slate-800">
+  <header id="navbar" class="bg-white border-b border-slate-200/80 sticky top-0 z-40"></header>
+  <main class="mx-auto w-full max-w-none px-3.5 pb-12 pt-6 text-[#0F354A] sm:px-5 lg:px-[30px] lg:pt-8" id="queue-page">
+    <div class="mb-[22px] flex items-start justify-between gap-4 sm:items-center">
+      <div>
+        <p class="mb-1 text-[9px] tracking-[0.13em] text-[#8A9FB0] sm:text-[10px]">
+          DOCTOR / STAFF
+        </p>
+        <h1 class="text-[25px] font-bold leading-snug sm:text-[30px]">
+          จัดการคิวตรวจ
+        </h1>
+      </div>
+      <div
+        class="flex max-w-[125px] flex-wrap items-center justify-end gap-[7px] text-[9px] text-[#7F9BAD] sm:max-w-none sm:text-[11px]">
+        <span id="sync-dot" class="h-[7px] w-[7px] rounded-full bg-emerald-500"></span><span id="sync-status"
+          role="status">กำลังเชื่อมต่อ…</span><button id="refresh"
+          class="rounded-lg border border-[#E3EDF3] bg-white p-[7px] [&_svg]:h-3.5 [&_svg]:w-3.5"
+          aria-label="รีเฟรชคิว">
+          <i data-lucide="refresh-cw"></i>
+        </button>
+      </div>
+    </div>
+    <div id="access-message"
+      class="mb-4 rounded-xl border border-[#C9E2F0] bg-[#EDF8FD] px-[18px] py-[15px] text-xs leading-loose text-[#376E8C] [&_a]:text-[#134E6F] [&_a]:underline"
+      hidden></div>
+    <div id="workspace" hidden>
+      <section class="mb-5 grid grid-cols-3 gap-2 sm:gap-3 lg:gap-5" aria-label="สรุปจำนวนคิว">
+        <article
+          class="flex flex-col items-start justify-between gap-3 rounded-xl border border-[#E3EDF3] bg-white px-2.5 py-3.5 sm:flex-row sm:items-center sm:rounded-2xl sm:px-5 sm:py-[22px] [&_h2]:mb-1 [&_h2]:text-[11px] [&_h2]:font-semibold sm:[&_h2]:text-[13px] [&_p]:text-[8px] [&_p]:text-[#719AB3] sm:[&_p]:text-[10px] [&_strong]:text-[27px] [&_strong]:font-semibold [&_strong]:leading-none sm:[&_strong]:text-[30px] [&_strong]:text-[#A87303]">
+          <div>
+            <h2>รอตรวจ</h2>
+            <p>นัดหมายที่ยืนยันแล้ว</p>
+          </div>
+          <strong id="count-waiting">—</strong>
+        </article>
+        <article
+          class="flex flex-col items-start justify-between gap-3 rounded-xl border border-[#E3EDF3] bg-white px-2.5 py-3.5 sm:flex-row sm:items-center sm:rounded-2xl sm:px-5 sm:py-[22px] [&_h2]:mb-1 [&_h2]:text-[11px] [&_h2]:font-semibold sm:[&_h2]:text-[13px] [&_p]:text-[8px] [&_p]:text-[#719AB3] sm:[&_p]:text-[10px] [&_strong]:text-[27px] [&_strong]:font-semibold [&_strong]:leading-none sm:[&_strong]:text-[30px] [&_strong]:text-[#087B9A]">
+          <div>
+            <h2>กำลังตรวจ</h2>
+            <p>ผู้ป่วยอยู่ระหว่างตรวจ</p>
+          </div>
+          <strong id="count-progress">—</strong>
+        </article>
+        <article
+          class="flex flex-col items-start justify-between gap-3 rounded-xl border border-[#E3EDF3] bg-white px-2.5 py-3.5 sm:flex-row sm:items-center sm:rounded-2xl sm:px-5 sm:py-[22px] [&_h2]:mb-1 [&_h2]:text-[11px] [&_h2]:font-semibold sm:[&_h2]:text-[13px] [&_p]:text-[8px] [&_p]:text-[#719AB3] sm:[&_p]:text-[10px] [&_strong]:text-[27px] [&_strong]:font-semibold [&_strong]:leading-none sm:[&_strong]:text-[30px] [&_strong]:text-[#268B5D]">
+          <div>
+            <h2>เสร็จสิ้น</h2>
+            <p>ตรวจเสร็จเรียบร้อย</p>
+          </div>
+          <strong id="count-completed">—</strong>
+        </article>
+      </section>
+      <section
+        class="mb-[18px] grid grid-cols-2 gap-[9px] [&_label]:min-w-0 [&_input]:h-[39px] [&_input]:w-full [&_input]:rounded-lg [&_input]:border [&_input]:border-[#E3EDF3] [&_input]:bg-white [&_input]:px-2.5 [&_input]:text-[11px] [&_input]:text-[#396B87] [&_input]:placeholder:text-[#93A7B7] [&_input]:focus:outline-[#B5D9EB] [&_select]:h-[39px] [&_select]:w-full [&_select]:rounded-lg [&_select]:border [&_select]:border-[#E3EDF3] [&_select]:bg-white [&_select]:px-2.5 [&_select]:text-[11px] [&_select]:text-[#396B87] [&_select]:focus:outline-[#B5D9EB] sm:grid-cols-[1.5fr_1fr_1fr_1fr] lg:grid-cols-[2fr_1.05fr_1.05fr_1.3fr]"
+        aria-label="ตัวกรองคิว">
+        <label
+          class="relative col-span-2 [&_svg]:absolute [&_svg]:left-3 [&_svg]:top-3 [&_svg]:h-[15px] [&_svg]:w-[15px] [&_svg]:text-[#8BA2B4] [&_input]:pl-9 sm:col-span-1"><i
+            data-lucide="search"></i><input id="search" type="search" placeholder="ค้นหาชื่อผู้ป่วย / เลขคิว / รหัสนัด"
+            aria-label="ค้นหาคิว" /></label>
+        <label><span class="sr-only">วันที่นัดหมาย</span><input id="date" type="date"
+            aria-label="วันที่นัดหมาย" /></label>
+        <label><span class="sr-only">แผนก</span><select id="department" aria-label="แผนก">
+            <option value="">ทุกแผนก</option>
+          </select></label>
+        <label class="col-span-2 sm:col-span-1"><span class="sr-only">แพทย์</span><select id="doctor"
+            aria-label="แพทย์">
+            <option value="">แพทย์ทุกท่าน</option>
+          </select></label>
+      </section>
+      <p id="pending-note" class="-mt-1 mb-[15px] text-[10px] text-[#7F95A6]" hidden></p>
+      <div id="error-message"
+        class="mb-4 rounded-xl border border-[#C9E2F0] bg-[#EDF8FD] px-[18px] py-[15px] text-xs leading-loose text-[#376E8C] [&_a]:text-[#134E6F] [&_a]:underline !border-rose-200 !bg-rose-50 !text-rose-700"
+        role="alert" hidden></div>
+      <div id="history-note"
+        class="mb-4 rounded-xl border border-[#C9E2F0] bg-[#EDF8FD] px-[18px] py-[15px] text-xs leading-loose text-[#376E8C] [&_a]:text-[#134E6F] [&_a]:underline"
+        hidden>
+        กำลังดูคิวต่างวัน เปลี่ยนสถานะได้เฉพาะคิวของวันนี้
+      </div>
+      <div class="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,2.6fr)_minmax(260px,1fr)]">
+        <section
+          class="overflow-hidden rounded-2xl border border-[#E3EDF3] bg-white [&_h2]:text-sm [&_h2]:font-semibold"
+          aria-labelledby="list-title">
+          <div class="flex items-center justify-between gap-3 px-3.5 pb-3.5 pt-[18px] sm:px-5">
+            <h2 id="list-title">รายการคิววันนี้</h2>
+            <span id="list-date" class="max-w-[115px] text-right text-[10px] text-[#7B9DB4] sm:max-w-none"></span>
+          </div>
+          <div id="tabs" class="flex flex-wrap gap-1 px-3 pb-[11px] sm:gap-[7px] sm:px-5" role="group"
+            aria-label="กรองสถานะคิว">
+            <button class="rounded-md px-2 py-1.5 text-[9px] sm:px-2.5 sm:text-[10px]" data-status="all">
+              ทั้งหมด <span id="tab-all">0</span></button><button
+              class="rounded-md px-2 py-1.5 text-[9px] sm:px-2.5 sm:text-[10px]" data-status="waiting">
+              รอตรวจ <span id="tab-waiting">0</span></button><button
+              class="rounded-md px-2 py-1.5 text-[9px] sm:px-2.5 sm:text-[10px]" data-status="in_progress">
+              กำลังตรวจ <span id="tab-progress">0</span></button><button
+              class="rounded-md px-2 py-1.5 text-[9px] sm:px-2.5 sm:text-[10px]" data-status="completed">
+              เสร็จสิ้น <span id="tab-completed">0</span>
+            </button>
+          </div>
+          <div class="overflow-x-auto">
+            <table
+              class="w-full border-collapse whitespace-nowrap text-left [&_th]:px-3 [&_th]:py-3 [&_th]:text-[10px] [&_th]:font-normal [&_td]:border-b [&_td]:border-[#EEF4F7] [&_td]:px-3 [&_td]:py-3 [&_td]:text-[11px] xl:[&_th]:px-4 xl:[&_td]:px-4">
+              <thead class="bg-[#F4F9FC] text-[#7A9FB6]">
+                <tr>
+                  <th>เลขคิว</th>
+                  <th>ผู้ป่วย</th>
+                  <th>เวลานัด</th>
+                  <th>แพทย์</th>
+                  <th>สถานะ</th>
+                  <th>จัดการ</th>
+                </tr>
+              </thead>
+              <tbody id="queue-rows">
+                <tr>
+                  <td colspan="6" class="!px-4 !py-11 text-center text-xs text-[#91A8B8] whitespace-normal">
+                    กำลังโหลดรายการคิว…
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div
+            class="flex items-center justify-between px-3 py-[18px] text-[10px] text-[#6E98B1] sm:px-5 [&>div]:flex [&>div]:items-center [&>div]:gap-[9px]">
+            <span id="page-summary">—</span>
+            <div>
+              <button id="previous"
+                class="h-[27px] w-[27px] rounded-lg border border-[#E3EDF3] bg-white text-[#316B8D] disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-300"
+                aria-label="หน้าก่อนหน้า">
+                ‹</button><span id="page-number">1 / 1</span><button id="next-page"
+                class="h-[27px] w-[27px] rounded-lg border border-[#E3EDF3] bg-white text-[#316B8D] disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-300"
+                aria-label="หน้าถัดไป">
+                ›
+              </button>
+            </div>
+          </div>
+        </section>
+        <aside class="flex flex-col gap-4 sm:grid sm:grid-cols-2 lg:flex" aria-label="คิวปัจจุบันและคิวถัดไป">
+          <section
+            class="overflow-hidden rounded-2xl border border-[#E3EDF3] bg-white [&_h2]:text-sm [&_h2]:font-semibold p-5">
+            <div class="flex items-center justify-between gap-3">
+              <h2 id="focus-doctor" class="max-w-[165px] !text-xs">
+                คิวปัจจุบัน
+              </h2>
+              <span
+                class="inline-flex items-center whitespace-nowrap rounded-full px-2 py-1 text-[9px] font-normal leading-snug bg-[#E0F4F8] text-[#2E91A7]">กำลังตรวจ</span>
+            </div>
+            <div id="current-queue" class="mt-3">
+              <p class="!px-4 !py-11 text-center text-xs text-[#91A8B8] whitespace-normal">
+                ยังไม่มีคิวกำลังตรวจ
+              </p>
+            </div>
+          </section>
+          <section
+            class="overflow-hidden rounded-2xl border border-[#E3EDF3] bg-white [&_h2]:text-sm [&_h2]:font-semibold p-5">
+            <h2>คิวถัดไป</h2>
+            <div id="next-queue" class="mt-3">
+              <p class="!px-4 !py-11 text-center text-xs text-[#91A8B8] whitespace-normal">
+                ยังไม่มีคิวรอตรวจ
+              </p>
+            </div>
+          </section>
+          <p class="col-span-2 text-center text-[9px] leading-loose text-[#8BA4B4]">
+            อัปเดตทุก 5 วินาที • เวลาไทย<br />เลขคิวแสดงตามลำดับสร้างนัดหมายในวันนั้น
+          </p>
+        </aside>
+      </div>
+    </div>
+  </main>
+  <dialog id="confirm-dialog"
+    class="w-[calc(100%_-_36px)] max-w-[430px] rounded-[20px] border-0 p-[30px] text-[#0F354A] shadow-2xl backdrop:bg-[#12374B]/40 backdrop:backdrop-blur-sm [&_h2]:mb-2 [&_h2]:mt-4 [&_h2]:text-xl [&_h2]:font-semibold [&_p]:text-[13px] [&_p]:leading-loose [&_p]:text-[#6C8798]">
+    <form method="dialog">
+      <div class="w-12 rounded-2xl bg-[#E0F3F8] p-3 text-[#1D708D]">
+        <i data-lucide="check-check"></i>
+      </div>
+      <h2>ยืนยันตรวจเสร็จสิ้น</h2>
+      <p id="confirm-description"></p>
+      <div
+        class="mt-6 flex justify-end gap-2.5 [&_button]:rounded-lg [&_button]:border [&_button]:border-[#DAE7EF] [&_button]:px-[18px] [&_button]:py-2.5 [&_button]:text-xs">
+        <button value="cancel" class="bg-white text-[#628199]">ยกเลิก</button><button value="confirm"
+          class="bg-[#19617E] text-white">
+          ยืนยันเสร็จสิ้น
+        </button>
+      </div>
+    </form>
+  </dialog>
+  <div id="toast"
+    class="fixed bottom-6 left-1/2 z-[80] max-w-[calc(100%_-_32px)] -translate-x-1/2 rounded-xl bg-[#15536B] px-[22px] py-3.5 text-xs text-white shadow-xl"
+    role="status" hidden></div>
+  <script src="/js/app.js"></script>
+  <!-- JavaScript is inline, matching the existing team HTML pages. -->
+  <script>
+    (() => {
+      "use strict";
+      const $ = (id) => document.getElementById(id);
+      const escapeHtml = (value) =>
+        String(value ?? "").replace(
+          /[&<>"']/g,
+          (c) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;",
+            })[c],
+        );
+      const labels = {
+        waiting: "รอตรวจ",
+        in_progress: "กำลังตรวจ",
+        completed: "เสร็จสิ้น",
+      };
+      const state = {
+        page: 1,
+        status: "all",
+        data: null,
+        loading: false,
+        saving: false,
+        online: false,
+        stopped: false,
+        request: 0,
+      };
+      let controller, searchTimer, toastTimer;
+      const thaiDate = (value) =>
+        new Intl.DateTimeFormat("th-TH", {
+          dateStyle: "long",
+          timeZone: "Asia/Bangkok",
+        }).format(new Date(`${value}T12:00:00+07:00`));
+      const time = (value) =>
+        new Intl.DateTimeFormat("th-TH", {
+          hour: "2-digit",
+          minute: "2-digit",
+          timeZone: "Asia/Bangkok",
+        }).format(new Date(value));
+      const today = () =>
+        new Intl.DateTimeFormat("en-CA", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          timeZone: "Asia/Bangkok",
+        }).format(new Date());
+
+      function toast(message) {
+        $("toast").textContent = message;
+        $("toast").hidden = false;
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => {
+          $("toast").hidden = true;
+        }, 4500);
+      }
+      function accessMessage(message, login = false) {
+        state.stopped = true;
+        controller?.abort();
+        $("workspace").hidden = true;
+        $("access-message").hidden = false;
+        $("access-message").textContent = message;
+        const link = document.createElement("a");
+        link.href = login
+          ? "/auth.html?tab=login&next=%2Fqueue.html"
+          : "/index.html";
+        link.textContent = login ? " เข้าสู่ระบบ" : " กลับหน้าหลัก";
+        $("access-message").append(link);
+        $("sync-status").textContent = "ไม่ได้เชื่อมต่อ";
+        setConnection(false);
+      }
+      async function api(url, options = {}) {
+        const { token } = getAuth();
+        const response = await fetch(`${API_URL}${url}`, {
+          ...options,
+          cache: "no-store",
+          headers: {
+            ...options.headers,
+            Authorization: `Bearer ${token || ""}`,
+          },
+          signal: options.signal || AbortSignal.timeout(15000),
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          if (response.status === 401 || response.status === 403)
+            accessMessage(
+              result.message ||
+              "กรุณาเข้าสู่ระบบด้วยบัญชีแพทย์หรือเจ้าหน้าที่",
+              response.status === 401,
+            );
+          throw new Error(result.message || "ไม่สามารถเชื่อมต่อระบบได้");
+        }
+        return result;
+      }
+      function setConnection(online) {
+        $("sync-dot").className =
+          "h-[7px] w-[7px] rounded-full " +
+          (online ? "bg-emerald-500" : "bg-amber-500");
+      }
+      // Tailwind classes are complete strings so the CDN can discover every state.
+      function badge(status) {
+        const colors = {
+          waiting: "bg-[#FFF5DF] text-[#AC7B16]",
+          in_progress: "bg-[#E0F4F8] text-[#2E91A7]",
+          completed: "bg-[#E5F4EB] text-[#368A5D]",
+        };
+        return `<span class="inline-flex whitespace-nowrap rounded-full px-2 py-1 text-[9px] font-normal leading-snug ${colors[status]}">${labels[status]}</span>`;
+      }
+      function action(row) {
+        const base =
+          "w-full min-w-[92px] rounded-md border px-2.5 py-2 text-[10px] leading-snug transition hover:brightness-95 disabled:cursor-not-allowed disabled:border-slate-100 disabled:bg-slate-100 disabled:text-slate-400";
+        let disabled =
+          !state.online ||
+          state.loading ||
+          state.saving ||
+          state.data.date !== state.data.today;
+        if (row.queueStatus === "completed")
+          return `<button class="${base}" disabled>ตรวจเสร็จแล้ว</button>`;
+        if (row.queueStatus === "waiting") {
+          const busy = state.data.busyDoctorIds.includes(row.doctor.id);
+          disabled ||= busy;
+          return `<button class="${base} border-[#19617E] bg-[#19617E] text-white" data-id="${escapeHtml(row.id)}" data-target="in_progress" ${disabled ? "disabled" : ""}>${busy ? "แพทย์กำลังตรวจ" : "เรียกเข้าตรวจ"}</button>`;
+        }
+        return `<button class="${base} border-[#E3EDF3] bg-white text-[#3F829E]" data-id="${escapeHtml(row.id)}" data-target="completed" ${disabled ? "disabled" : ""}>ตรวจเสร็จสิ้น</button>`;
+      }
+      function detail(row, next = false) {
+        if (!row)
+          return `<p class="py-8 text-center text-xs text-[#91A8B8]">${next ? "ไม่มีคิวรอตรวจ" : "ยังไม่มีคิวกำลังตรวจ"}</p>`;
+        return `
+      <strong class="mb-2.5 block font-semibold leading-snug text-[#196A8C] ${next ? "text-[23px]" : "text-[38px]"}">${escapeHtml(row.queueNumber)}</strong>
+      <h3 class="mb-2 break-words text-sm font-medium">${escapeHtml(row.patient.full_name)}</h3>
+      <p class="my-1 break-words text-[10px] leading-loose text-[#6D9AB3]" title="${escapeHtml(row.id)}">รหัสนัด ${escapeHtml(row.id.slice(0, 8))} · เวลานัด ${time(row.appointmentDate)} น.</p>
+      <p class="my-1 text-[10px] leading-loose text-[#6D9AB3]">${escapeHtml(row.doctor.docName)}</p>
+      ${row.service ? `<p class="my-1 text-[10px] leading-loose text-[#6D9AB3]">${escapeHtml(row.service.serviceName)}</p>` : ""}
+      <div class="mt-3">${action(row)}</div>`;
+      }
+      function updateDoctorOptions() {
+        if (!state.data) return;
+        const selected = $("doctor").value;
+        const doctors = state.data.doctors.filter(
+          (d) =>
+            !$("department").value || d.department === $("department").value,
+        );
+        $("doctor").innerHTML =
+          '<option value="">แพทย์ทุกท่าน</option>' +
+          doctors
+            .map(
+              (d) =>
+                `<option value="${escapeHtml(d.id)}">${escapeHtml(d.docName)}</option>`,
+            )
+            .join("");
+        $("doctor").value = doctors.some((d) => d.id === selected)
+          ? selected
+          : "";
+      }
+      function render() {
+        const d = state.data;
+        if (!d) return;
+        $("count-waiting").textContent = d.counts.waiting;
+        $("count-progress").textContent = d.counts.in_progress;
+        $("count-completed").textContent = d.counts.completed;
+        for (const [id, key] of [
+          ["all", "all"],
+          ["waiting", "waiting"],
+          ["progress", "in_progress"],
+          ["completed", "completed"],
+        ])
+          $("tab-" + id).textContent = d.counts[key];
+        $("list-title").textContent =
+          d.date === d.today ? "รายการคิววันนี้" : "รายการคิวตามวันที่";
+        $("list-date").textContent = thaiDate(d.date);
+        $("history-note").hidden = d.date === d.today;
+        $("pending-note").hidden = !d.pendingCount;
+        $("pending-note").textContent =
+          `มีนัดหมายรอยืนยัน ${d.pendingCount} รายการ ซึ่งยังไม่เข้าคิวตรวจ`;
+        $("queue-rows").innerHTML = d.items.length
+          ? d.items
+            .map(
+              (a) => `
+      <tr class="${a.queueStatus === "in_progress" ? "bg-[#F0FAFD]" : ""}">
+        <td class="!text-[13px] font-semibold text-[#196A8C]">${escapeHtml(a.queueNumber)}</td>
+        <td>
+          <div class="max-w-[180px] truncate font-medium">${escapeHtml(a.patient.full_name)}</div>
+          <div class="mt-1 text-[9px] text-[#7A9FB6]" title="${escapeHtml(a.id)}">รหัสนัด ${escapeHtml(a.id.slice(0, 8))}</div>
+        </td>
+        <td>${time(a.appointmentDate)}</td>
+        <td>
+          <div class="max-w-[130px] truncate" title="${escapeHtml(a.doctor.docName)}">${escapeHtml(a.doctor.docName)}</div>
+          <div class="mt-1 text-[9px] text-[#7A9FB6]">${escapeHtml(a.doctor.department)}</div>
+        </td>
+        <td>${badge(a.queueStatus)}</td>
+        <td>${action(a)}</td>
+      </tr>`,
+            )
+            .join("")
+          : '<tr><td colspan="6" class="!px-4 !py-11 whitespace-normal text-center !text-xs text-[#91A8B8]">ไม่พบคิวตามตัวกรองนี้<br>ระบบแสดงนัดหมายที่ยืนยันแล้ว กำลังตรวจ และเสร็จสิ้น</td></tr>';
+        $("page-summary").textContent =
+          `แสดง ${d.items.length} จาก ${d.pagination.total} คิว`;
+        $("page-number").textContent =
+          `${d.pagination.page} / ${d.pagination.totalPages}`;
+        $("previous").disabled = d.pagination.page <= 1 || state.loading;
+        $("next-page").disabled =
+          d.pagination.page >= d.pagination.totalPages || state.loading;
+        $("focus-doctor").textContent =
+          d.focusDoctor?.docName || "คิวปัจจุบัน";
+        $("current-queue").innerHTML = detail(d.current);
+        $("next-queue").innerHTML = detail(d.next, true);
+        document.querySelectorAll("#tabs button").forEach((button) => {
+          button.className =
+            "rounded-md px-2 py-1.5 text-[9px] sm:px-2.5 sm:text-[10px] " +
+            (button.dataset.status === state.status
+              ? "bg-[#1C6583] text-white"
+              : "bg-transparent text-[#6996B0]");
+        });
+      }
+      async function load({ polling = false } = {}) {
+        if (state.stopped || (polling && (state.loading || state.saving)))
+          return;
+        controller?.abort();
+        controller = new AbortController();
+        const requestController = controller;
+        const timer = setTimeout(() => requestController.abort(), 15000);
+        const request = ++state.request;
+        state.loading = true;
+        render();
+        const params = new URLSearchParams({
+          date: $("date").value,
+          page: state.page,
+          limit: 5,
+          status: state.status,
+          q: $("search").value.trim(),
+          department: $("department").value,
+          doctorId: $("doctor").value,
+        });
+        try {
+          const data = await api(`/queue?${params}`, {
+            signal: controller.signal,
+          });
+          if (request !== state.request) return;
+          state.data = data;
+          state.page = data.pagination.page;
+          state.online = true;
+          $("error-message").hidden = true;
+          setConnection(true);
+          $("sync-status").textContent = `อัปเดต ${time(data.updatedAt)} น.`;
+          const selected = $("department").value;
+          const departments = [
+            ...new Set(data.doctors.map((d) => d.department)),
+          ].sort();
+          $("department").innerHTML =
+            '<option value="">ทุกแผนก</option>' +
+            departments
+              .map(
+                (d) =>
+                  `<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`,
+              )
+              .join("");
+          $("department").value = departments.includes(selected)
+            ? selected
+            : "";
+          updateDoctorOptions();
+        } catch (error) {
+          if (request !== state.request || state.stopped) return;
+          state.online = false;
+          $("error-message").hidden = false;
+          $("error-message").textContent =
+            `${error.name === "AbortError" ? "การเชื่อมต่อใช้เวลานานเกินไป" : error.message} ข้อมูลเดิมอาจยังไม่อัปเดต กดรีเฟรชเพื่อลองใหม่`;
+          $("sync-status").textContent = "เชื่อมต่อไม่สำเร็จ";
+          setConnection(false);
+        } finally {
+          clearTimeout(timer);
+          if (request === state.request) {
+            state.loading = false;
+            render();
+          }
+        }
+      }
+      function confirmComplete(row) {
+        $("confirm-description").textContent =
+          `บันทึกว่า ${row.patient.full_name} (${row.queueNumber}) ตรวจเสร็จแล้ว สถานะนี้ไม่สามารถย้อนกลับจากหน้าคิวได้`;
+        const dialog = $("confirm-dialog");
+        dialog.returnValue = "";
+        return new Promise((resolve) => {
+          dialog.addEventListener(
+            "close",
+            () => resolve(dialog.returnValue === "confirm"),
+            { once: true },
+          );
+          dialog.showModal();
+        });
+      }
+      async function changeStatus(id, target) {
+        if (state.saving || state.loading || !state.online) return;
+        const row = [
+          ...state.data.items,
+          state.data.current,
+          state.data.next,
+        ].find((a) => a?.id === id);
+        if (!row) return;
+        state.saving = true;
+        render();
+        try {
+          if (target === "completed" && !(await confirmComplete(row))) return;
+          const result = await api(
+            `/queue/${encodeURIComponent(id)}/status`,
+            {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ status: target }),
+            },
+          );
+          toast(result.message);
+        } catch (error) {
+          if (!state.stopped) {
+            $("error-message").hidden = false;
+            $("error-message").textContent = error.message;
+            toast(error.message);
+          }
+        } finally {
+          state.saving = false;
+          await load();
+        }
+      }
+      function changed() {
+        state.page = 1;
+        load();
+      }
+      $("date").value = today();
+      $("search").addEventListener("input", () => {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(changed, 300);
+      });
+      $("date").addEventListener("change", changed);
+      $("department").addEventListener("change", () => {
+        updateDoctorOptions();
+        changed();
+      });
+      $("doctor").addEventListener("change", changed);
+      $("refresh").addEventListener("click", () => load());
+      $("previous").addEventListener("click", () => {
+        state.page--;
+        load();
+      });
+      $("next-page").addEventListener("click", () => {
+        state.page++;
+        load();
+      });
+      $("tabs").addEventListener("click", (event) => {
+        const button = event.target.closest("[data-status]");
+        if (button) {
+          state.status = button.dataset.status;
+          changed();
+        }
+      });
+      $("workspace").addEventListener("click", (event) => {
+        const button = event.target.closest("[data-target]");
+        if (button && !button.disabled)
+          changeStatus(button.dataset.id, button.dataset.target);
+      });
+      document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) load();
+      });
+      window.addEventListener("storage", (event) => {
+        if (["medpoint_token", "medpoint_user"].includes(event.key))
+          window.location.reload();
+      });
+
+      async function start() {
+        let auth;
+        try {
+          auth = getAuth();
+        } catch {
+          accessMessage(
+            "ข้อมูลเข้าสู่ระบบไม่ถูกต้อง กรุณาเข้าสู่ระบบใหม่",
+            true,
+          );
+          return;
+        }
+        renderNavbar("queue");
+        if (!auth.token) {
+          accessMessage("กรุณาเข้าสู่ระบบเพื่อจัดการคิวตรวจ", true);
+          return;
+        }
+        try {
+          const { user } = await api("/auth/me");
+          if (!["ADMIN", "DOCTOR_STAFF"].includes(user.role)) {
+            accessMessage(
+              "หน้านี้สำหรับแพทย์ เจ้าหน้าที่ และผู้ดูแลระบบเท่านั้น",
+            );
+            return;
+          }
+          $("workspace").hidden = false;
+          await load();
+          setInterval(() => {
+            if (!document.hidden) load({ polling: true });
+          }, 5000);
+        } catch (error) {
+          if (!state.stopped) accessMessage(error.message, true);
+        }
+      }
+      start();
+    })();
+  </script>
+</body>
+
+</html>
