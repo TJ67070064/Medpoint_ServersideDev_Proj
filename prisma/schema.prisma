@@ -1,0 +1,94 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String         @id @default(uuid())
+  full_name     String
+  email         String         @unique
+  password      String
+  phone         String?
+  role          String         @default("PATIENT")
+  createdAt     DateTime       @default(now())
+  appointments  Appointment[]
+  screenings    Screening[]
+  notifications Notification[]
+}
+
+model Doctor {
+  id             String        @id @default(uuid())
+  docName        String
+  specialization String
+  department     String
+  phone          String
+  status         String        @default("active")
+  createdAt      DateTime      @default(now())
+  schedules      Schedule[]
+  appointments   Appointment[]
+}
+
+model Schedule {
+  id            String   @id @default(uuid())
+  doctorId      String
+  doctor        Doctor   @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  availableDate DateTime
+  startTime     String
+  endTime       String
+  isBooked      Boolean  @default(false)
+}
+
+model Service {
+  id              String        @id @default(uuid())
+  serviceName     String
+  docName         String?
+  durationMinutes Int
+  price           Decimal       @db.Decimal(10, 2)
+  status          String        @default("active")
+  createdAt       DateTime      @default(now())
+  appointments    Appointment[]
+}
+
+model Appointment {
+  id              String   @id @default(uuid())
+  patientId       String
+  patient         User     @relation(fields: [patientId], references: [id])
+  doctorId        String
+  doctor          Doctor   @relation(fields: [doctorId], references: [id])
+  serviceId       String?
+  service         Service? @relation(fields: [serviceId], references: [id])
+  appointmentDate DateTime
+  status          String   @default("pending")
+  createdAt       DateTime @default(now())
+}
+
+model SymptomRule {
+  ruleId                 Int     @id @default(autoincrement())
+  complaint              String
+  question_text          String
+  is_red_flag            Boolean
+  recommended_department String
+}
+
+model Screening {
+  id                    String   @id @default(uuid())
+  patientId             String
+  patient               User     @relation(fields: [patientId], references: [id])
+  complaint             String
+  isRedFlag             Boolean
+  recommendedDepartment String
+  createdAt             DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  patientId String
+  patient   User     @relation(fields: [patientId], references: [id])
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}

@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>บริการและแพ็กเกจ - MedPoint</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Prompt', sans-serif; background-color: #F8FAFC; }
+  </style>
+</head>
+<body class="text-slate-800 min-h-screen">
+  <header id="navbar" class="bg-white border-b border-slate-200/80 sticky top-0 z-40"></header>
+
+  <main class="max-w-5xl mx-auto px-4 sm:px-6 py-10">
+    <!-- Banner หัวข้อหน้า -->
+    <div class="bg-[#DCEEF7] rounded-3xl px-8 py-7 mb-8 flex flex-wrap justify-between items-center gap-4">
+      <div>
+        <h1 class="text-2xl font-bold text-[#0F354A]">บริการและแพ็กเกจ</h1>
+        <p class="text-[#456B80] text-sm mt-1">ดูบริการพร้อมราคาก่อนตัดสินใจเข้ารับการตรวจรักษา</p>
+      </div>
+      <!-- ปุ่มเพิ่มบริการ (แสดงแค่ ADMIN) -->
+      <button id="btn-add-service" onclick="openModal()" class="hidden bg-[#134E6F] hover:bg-[#0D3952] text-white font-medium text-sm px-5 py-3 rounded-xl shadow-sm flex items-center gap-2 transition">
+        <i data-lucide="plus" class="w-4 h-4"></i> เพิ่มบริการใหม่
+      </button>
+    </div>
+
+    <div id="services-grid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+      <div class="text-slate-400 text-sm">กำลังโหลดข้อมูลบริการ...</div>
+    </div>
+  </main>
+
+  <!-- Modal เพิ่ม / แก้ไข บริการ (Admin) -->
+  <div id="service-modal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+    <div class="bg-white border border-slate-200 rounded-3xl max-w-md w-full p-7 shadow-xl">
+      <h2 id="modal-title" class="text-lg font-bold text-[#0F354A] mb-4">เพิ่มรายการบริการใหม่</h2>
+      <form onsubmit="saveService(event)" class="space-y-4">
+        <input type="hidden" id="edit-id" />
+        <div>
+          <label class="block text-xs font-medium text-slate-600 mb-1">ชื่อบริการ / แพ็กเกจ</label>
+          <input type="text" id="srv-name" required placeholder="เช่น ตรวจสุขภาพประจำปี Basic"
+            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-[#134E6F] focus:bg-white" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-600 mb-1">แพทย์ผู้รับผิดชอบ (ไม่บังคับ)</label>
+          <input type="text" id="srv-doc" placeholder="เช่น นพ. สมชาย ใจดี"
+            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-[#134E6F] focus:bg-white" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">ระยะเวลา (นาที)</label>
+            <input type="number" id="srv-duration" required min="5" placeholder="45"
+              class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-[#134E6F] focus:bg-white" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">ค่าบริการ (บาท)</label>
+            <input type="number" id="srv-price" required min="0" step="0.01" placeholder="1500"
+              class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-[#134E6F] focus:bg-white" />
+          </div>
+        </div>
+        <div class="flex justify-end gap-2.5 pt-3">
+          <button type="button" onclick="closeModal()" class="px-4 py-2.5 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 text-sm font-medium">
+            ยกเลิก
+          </button>
+          <button type="submit" class="px-5 py-2.5 rounded-xl bg-[#134E6F] hover:bg-[#0D3952] text-white text-sm font-medium">
+            บันทึกข้อมูล
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/js/app.js"></script>
+  <script>
+    renderNavbar('services');
+    const { token, user } = getAuth();
+    const isAdmin = user && user.role === 'ADMIN';
+
+    if (isAdmin) {
+      document.getElementById('btn-add-service').classList.remove('hidden');
+    }
+
+    async function loadServices() {
+      const res = await fetch(`${API_URL}/services`);
+      const services = await res.json();
+      const grid = document.getElementById('services-grid');
+
+      if (!services.length) {
+        grid.innerHTML = '<div class="text-slate-400 text-sm">ยังไม่มีรายการบริการที่เปิดใช้งาน</div>';
+        return;
+      }
+
+      grid.innerHTML = services
+        .map(
+          (s) => `
+          <div class="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-[0_2px_10px_rgba(15,53,74,0.03)] flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-4">
+                <div class="w-10 h-10 rounded-xl bg-[#B3D8EC] text-[#134E6F] flex items-center justify-center">
+                  <i data-lucide="briefcase-medical" class="w-5 h-5"></i>
+                </div>
+                <span class="text-xs font-medium px-3 py-1 rounded-full bg-[#DCEEF7] text-[#134E6F]">
+                  ${s.durationMinutes} นาที
+                </span>
+              </div>
+              <h3 class="text-base font-bold text-[#0F354A] mb-1">${s.serviceName}</h3>
+              <p class="text-xs text-slate-400 mb-5">แพทย์: ${s.docName || 'ไม่ระบุแพทย์เฉพาะทาง'}</p>
+            </div>
+
+            <div>
+              <div class="text-2xl font-bold text-[#134E6F] mb-4">฿${Number(s.price).toLocaleString()}</div>
+              ${
+                isAdmin
+                  ? `
+                <div class="grid grid-cols-2 gap-2 pt-3 border-t border-slate-100">
+                  <button onclick='openModal(${JSON.stringify(s)})' class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium py-2 rounded-xl transition">
+                    แก้ไข
+                  </button>
+                  <button onclick="softDeleteService('${s.id}')" class="bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-medium py-2 rounded-xl transition">
+                    ปิดใช้งาน
+                  </button>
+                </div>
+              `
+                  : `
+                <a href="/screening.html" class="block text-center bg-[#DCEEF7]/70 hover:bg-[#134E6F] text-[#134E6F] hover:text-white text-xs font-semibold py-2.5 rounded-xl transition">
+                  คัดกรองอาการก่อนรับบริการ &rarr;
+                </a>
+              `
+              }
+            </div>
+          </div>
+        `
+        )
+        .join('');
+
+      refreshIcons();
+    }
+
+    function openModal(service = null) {
+      document.getElementById('service-modal').classList.remove('hidden');
+      if (service) {
+        document.getElementById('modal-title').textContent = 'แก้ไขข้อมูลบริการ';
+        document.getElementById('edit-id').value = service.id;
+        document.getElementById('srv-name').value = service.serviceName;
+        document.getElementById('srv-doc').value = service.docName || '';
+        document.getElementById('srv-duration').value = service.durationMinutes;
+        document.getElementById('srv-price').value = service.price;
+      } else {
+        document.getElementById('modal-title').textContent = 'เพิ่มรายการบริการใหม่';
+        document.getElementById('edit-id').value = '';
+        document.getElementById('srv-name').value = '';
+        document.getElementById('srv-doc').value = '';
+        document.getElementById('srv-duration').value = '';
+        document.getElementById('srv-price').value = '';
+      }
+    }
+
+    function closeModal() {
+      document.getElementById('service-modal').classList.add('hidden');
+    }
+
+    async function saveService(e) {
+      e.preventDefault();
+      const id = document.getElementById('edit-id').value;
+      const payload = {
+        serviceName: document.getElementById('srv-name').value,
+        docName: document.getElementById('srv-doc').value,
+        durationMinutes: Number(document.getElementById('srv-duration').value),
+        price: Number(document.getElementById('srv-price').value),
+      };
+
+      const url = id ? `${API_URL}/services/${id}` : `${API_URL}/services`;
+      const method = id ? 'PATCH' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        return alert(err.message || 'ทำรายการไม่สำเร็จ');
+      }
+
+      closeModal();
+      loadServices();
+    }
+
+    async function softDeleteService(id) {
+      if (!confirm('ยืนยันการปิดใช้งานบริการนี้ (Soft Delete)?')) return;
+
+      const res = await fetch(`${API_URL}/services/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (res.status === 204) {
+        loadServices();
+      } else {
+        alert('ไม่สามารถปิดใช้งานบริการได้');
+      }
+    }
+
+    loadServices();
+  </script>
+</body>
+</html>
