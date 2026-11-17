@@ -33,6 +33,7 @@ const getAllDoctors = async (req, res) => {
     }
 
     const doctors = await prisma.doctor.findMany({
+      where: { status: { not: 'archived' } },
       select: {
         id: true,
         docName: true,
