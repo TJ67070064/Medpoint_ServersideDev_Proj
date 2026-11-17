@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ค้นหาแพทย์ - MedPoint</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Prompt', sans-serif;
+            background-color: #fff;
+        }
+
+        .admin-field {
+            width: 100%;
+            border: 1px solid #dbe5ed;
+            background: #F8FAFC;
+            border-radius: 12px;
+            padding: 10px 12px;
+            outline: none;
+        }
+
+        .admin-field:focus {
+            background: white;
+            border-color: #488DB4;
+            box-shadow: 0 0 0 3px #dceef7;
+        }
+
+        .admin-field-label {
+            display: block;
+            color: #475569;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+    </style>
+</head>
+
+<body class="text-slate-800 min-h-screen">
+    <!-- ใช้ navbar ส่วนกลางของเพื่อน ไม่สร้างระบบ Login/Navbar ซ้ำ -->
+    <header id="navbar" class="bg-white border-b border-slate-200/80 sticky top-0 z-40"></header>
+
+    <main class="max-w-[1250px] mx-auto px-4 sm:px-6 py-10 sm:py-12">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-7">
+            <div>
+                <p id="admin-doctor-label" class="hidden text-xs font-semibold tracking-wider text-[#165B7B] mb-1">ADMIN
+                    · MANAGEMENT</p>
+                <h1 id="doctor-page-title" class="font-bold text-[#022F56] text-3xl sm:text-4xl lg:text-[44px]">
+                    ค้นหาแพทย์</h1>
+            </div>
+            <div id="admin-doctor-actions" class="hidden flex flex-wrap gap-2">
+                <button id="admin-add-doctor" type="button"
+                    class="inline-flex items-center gap-2 bg-[#165B7B] hover:bg-[#0E4564] text-white rounded-xl px-4 py-2.5 text-sm font-medium">
+                    <i data-lucide="plus" class="w-4 h-4"></i>เพิ่มแพทย์
+                </button>
+                <button id="admin-switch-view" type="button"
+                    class="inline-flex items-center gap-2 border border-[#BFD5E3] text-[#165B7B] hover:bg-[#F5F9FC] rounded-xl px-4 py-2.5 text-sm font-medium">
+                    <i data-lucide="calendar-days" class="w-4 h-4"></i><span
+                        id="admin-view-label">จัดการตารางออกตรวจ</span>
+                </button>
+            </div>
+        </div>
+        <div id="admin-message" role="status" aria-live="polite" class="hidden mb-5 rounded-xl px-4 py-3 text-sm"></div>
+        <section id="doctor-directory">
+            <form id="doctor-search-form"
+                class="bg-[#F5F9FC] rounded-[13px] px-4 py-4 mb-7 grid grid-cols-1 md:grid-cols-12 gap-3" novalidate>
+                <label class="md:col-span-5 relative block">
+                    <span class="sr-only">ค้นหาชื่อแพทย์หรือความเชี่ยวชาญ</span>
+                    <i data-lucide="search"
+                        class="absolute top-3.5 left-3.5 w-5 h-5 text-[#718497] pointer-events-none"></i>
+                    <input id="search-name" type="search" placeholder="ค้นหาชื่อแพทย์หรือความเชี่ยวชาญ"
+                        class="w-full h-[49px] bg-white border border-[#E4EDF4] rounded-[9px] pl-11 pr-3 outline-none focus:ring-2 focus:ring-[#488DB4] text-sm text-[#022F56]" />
+                </label>
+                <label class="md:col-span-3 block">
+                    <span class="sr-only">เลือกสาขาการรักษา</span>
+                    <select id="search-department"
+                        class="w-full h-[49px] bg-white border border-[#E4EDF4] rounded-[9px] px-3 outline-none focus:ring-2 focus:ring-[#488DB4] text-sm text-[#022F56]">
+                        <option value="">ทุกสาขาการรักษา</option>
+                    </select>
+                </label>
+                <label class="md:col-span-3 block">
+                    <span class="sr-only">วันที่ออกตรวจ</span>
+                    <input id="search-date" type="date" title="วันที่ออกตรวจ"
+                        class="w-full h-[49px] bg-white border border-[#E4EDF4] rounded-[9px] px-3 outline-none focus:ring-2 focus:ring-[#488DB4] text-sm text-[#022F56]" />
+                </label>
+                <button type="submit"
+                    class="md:col-span-1 h-[49px] px-4 bg-[#165B7B] hover:bg-[#0E4564] text-white font-medium text-sm rounded-[9px] transition">ค้นหา</button>
+            </form>
+
+            <div class="flex items-center justify-between gap-3 mb-5">
+                <h2 class="text-[#022F56] font-semibold text-xl sm:text-[22px]">แพทย์ทั้งหมด</h2>
+                <p id="doctor-count" class="text-[#718497] text-sm" aria-live="polite">กำลังโหลดข้อมูล...</p>
+            </div>
+
+            <div id="doctor-error" role="alert"
+                class="hidden bg-red-50 border border-red-200 text-red-700 rounded-xl p-5 mb-5 text-sm"></div>
+            <div id="doctor-list" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 lg:gap-6"
+                aria-live="polite">
+                <div class="col-span-full py-14 text-center text-[#718497]">กำลังโหลดรายชื่อแพทย์...</div>
+            </div>
+        </section>
+        <!-- Admin ตารางออกตรวจ: ใช้หน้า doctors.html เดิม ไม่สร้างหน้าใหม่ -->
+        <section id="admin-schedule-panel" class="hidden" aria-label="จัดการตารางออกตรวจ">
+            <div
+                class="bg-[#DCEEF7] rounded-2xl px-5 py-5 mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                    <h2 class="font-semibold text-[#022F56] text-xl">ตารางออกตรวจประจำสัปดาห์</h2>
+                    <p class="text-sm text-[#456B80] mt-1">จัดการช่วงเวลาที่เปิดให้คนไข้จองคิว</p>
+                </div>
+                <button id="admin-add-schedule" type="button"
+                    class="inline-flex items-center justify-center gap-2 bg-[#165B7B] text-white hover:bg-[#0E4564] px-5 py-3 rounded-xl text-sm font-medium">
+                    <i data-lucide="calendar-plus" class="w-4 h-4"></i>เพิ่มช่วงออกตรวจ
+                </button>
+            </div>
+            <div class="bg-[#F5F9FC] rounded-2xl p-4 flex flex-wrap items-center gap-3 mb-5">
+                <label for="admin-schedule-doctor-filter" class="text-sm text-[#718497]">แพทย์</label>
+                <select id="admin-schedule-doctor-filter" class="admin-field w-full sm:w-64 text-sm">
+                    <option value="">แพทย์ทั้งหมด</option>
+                </select>
+                <div class="flex items-center gap-2 sm:ml-auto">
+                    <button id="admin-prev-week" type="button" aria-label="สัปดาห์ก่อน"
+                        class="p-2.5 border rounded-xl bg-white hover:bg-slate-50"><i data-lucide="chevron-left"
+                            class="w-4 h-4"></i></button>
+                    <span id="admin-week-label"
+                        class="text-sm font-semibold text-[#022F56] min-w-40 text-center"></span>
+                    <button id="admin-next-week" type="button" aria-label="สัปดาห์ถัดไป"
+                        class="p-2.5 border rounded-xl bg-white hover:bg-slate-50"><i data-lucide="chevron-right"
+                            class="w-4 h-4"></i></button>
+                </div>
+            </div>
+            <div class="bg-white border border-[#E4EDF4] rounded-2xl p-4 sm:p-5">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-semibold text-[#022F56]">ช่วงเวลาออกตรวจ</h3>
+                    <span id="admin-schedule-count" class="text-sm text-[#718497]"></span>
+                </div>
+                <div id="admin-week-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-3"></div>
+            </div>
+            <p class="text-xs text-[#718497] mt-3">ฐานข้อมูลยังไม่มีฟิลด์ห้องตรวจ จึงยังไม่แสดงห้องตรวจบนตารางนี้</p>
+        </section>
+    </main>
+
+    <!-- Modals มีไว้เฉพาะ Admin; PATIENT ไม่เห็นปุ่มและ Backend ป้องกันแยกต่างหาก -->
+    <div id="admin-doctor-modal" class="hidden fixed inset-0 z-50 bg-slate-900/50 p-4 flex items-center justify-center"
+        role="dialog" aria-modal="true" aria-labelledby="admin-doctor-modal-title">
+        <div class="bg-white w-full max-w-lg rounded-3xl p-6 sm:p-7 shadow-xl max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-5">
+                <h2 id="admin-doctor-modal-title" class="text-lg font-semibold text-[#022F56]">เพิ่มแพทย์</h2>
+                <button id="admin-close-doctor" type="button" aria-label="ปิดหน้าต่าง"><i data-lucide="x"
+                        class="w-5 h-5"></i></button>
+            </div>
+            <form id="admin-doctor-form" class="space-y-4">
+                <input id="admin-doctor-id" type="hidden" />
+                <div><label class="admin-field-label" for="admin-doctor-name">ชื่อแพทย์</label><input
+                        id="admin-doctor-name" class="admin-field" required placeholder="เช่น นพ. สมชาย ใจดี" /></div>
+                <div><label class="admin-field-label" for="admin-doctor-specialization">ความเชี่ยวชาญ /
+                        สาขา</label><input id="admin-doctor-specialization" class="admin-field" required
+                        placeholder="เช่น อายุรศาสตร์โรคหัวใจ" /></div>
+                <div><label class="admin-field-label" for="admin-doctor-department">แผนก</label><input
+                        id="admin-doctor-department" class="admin-field" required placeholder="เช่น แผนกอายุรกรรม" />
+                </div>
+                <div><label class="admin-field-label" for="admin-doctor-phone">เบอร์ติดต่อ</label><input
+                        id="admin-doctor-phone" class="admin-field" required inputmode="numeric" pattern="0[0-9]{8,9}"
+                        placeholder="0811112222" /></div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button id="admin-cancel-doctor" type="button"
+                        class="rounded-xl bg-slate-100 px-4 py-2.5 text-sm">ยกเลิก</button>
+                    <button id="admin-doctor-submit" type="submit"
+                        class="rounded-xl bg-[#165B7B] hover:bg-[#0E4564] text-white px-5 py-2.5 text-sm font-medium">บันทึกข้อมูล</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div id="admin-schedule-modal"
+        class="hidden fixed inset-0 z-50 bg-slate-900/50 p-4 flex items-center justify-center" role="dialog"
+        aria-modal="true" aria-labelledby="admin-schedule-modal-title">
+        <div class="bg-white w-full max-w-lg rounded-3xl p-6 sm:p-7 shadow-xl max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-5">
+                <h2 id="admin-schedule-modal-title" class="text-lg font-semibold text-[#022F56]">เพิ่มช่วงออกตรวจ</h2>
+                <button id="admin-close-schedule" type="button" aria-label="ปิดหน้าต่าง"><i data-lucide="x"
+                        class="w-5 h-5"></i></button>
+            </div>
+            <form id="admin-schedule-form" class="space-y-4">
+                <input id="admin-schedule-id" type="hidden" />
+                <div><label class="admin-field-label" for="admin-schedule-doctor">แพทย์</label><select
+                        id="admin-schedule-doctor" class="admin-field" required>
+                        <option value="">เลือกแพทย์</option>
+                    </select></div>
+                <div><label class="admin-field-label" for="admin-schedule-date">วันที่ออกตรวจ</label><input
+                        id="admin-schedule-date" type="date" class="admin-field" required /></div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div><label class="admin-field-label" for="admin-schedule-start">เวลาเริ่ม</label><input
+                            id="admin-schedule-start" type="time" class="admin-field" required value="09:00" /></div>
+                    <div><label class="admin-field-label" for="admin-schedule-end">เวลาสิ้นสุด</label><input
+                            id="admin-schedule-end" type="time" class="admin-field" required value="12:00" /></div>
+                </div>
+                <p class="text-xs text-[#718497]">แสดงเวลาไทย (UTC+7) และไม่สามารถแก้/ลบช่วงที่มีนัดหมายอยู่แล้ว</p>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button id="admin-cancel-schedule" type="button"
+                        class="rounded-xl bg-slate-100 px-4 py-2.5 text-sm">ยกเลิก</button>
+                    <button id="admin-schedule-submit" type="submit"
+                        class="rounded-xl bg-[#165B7B] hover:bg-[#0E4564] text-white px-5 py-2.5 text-sm font-medium">บันทึกช่วงเวลา</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script>
+        renderNavbar('doctors');
+        const isAdminDoctorViewer = getAuth().user?.role === 'ADMIN';
+        let adminDoctorReady = false;
+
+        const form = document.getElementById('doctor-search-form');
+        const nameInput = document.getElementById('search-name');
+        const departmentInput = document.getElementById('search-department');
+        const dateInput = document.getElementById('search-date');
+        const countElement = document.getElementById('doctor-count');
+        const listElement = document.getElementById('doctor-list');
+        const errorElement = document.getElementById('doctor-error');
+        let doctors = [];
+        let requestSerial = 0;
+
+        // ให้วันที่เลือกเป็นปฏิทินไทย (ไม่เลือกย้อนหลัง)
+        const todayThailand = new Date(Date.now() + 7 * 60 * 60 * 1000)
+            .toISOString().slice(0, 10);
+        dateInput.min = todayThailand;
+
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, (ch) => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[ch]));
+        }
+
+        function thaiDate(isoDate) {
+            return new Date(isoDate).toLocaleDateString('th-TH', {
+                timeZone: 'Asia/Bangkok', day: 'numeric', month: 'short', year: 'numeric'
+            });
+        }
+
+        function doctorStatus(doctor) {
+            if (String(doctor.status).toLowerCase() !== 'active') {
+                return { text: 'งดรับนัด', badge: 'bg-[#FCE9EB] text-[#B94B53]', bookable: false };
+            }
+            const slots = doctor.schedules || [];
+            if (slots.length === 0) {
+                return { text: 'ไม่เข้าเวร', badge: 'bg-[#EDF2F6] text-[#718497]', bookable: false };
+            }
+            if (slots.every(slot => slot.isBooked)) {
+                return { text: 'คิวเต็ม', badge: 'bg-[#FFF3D8] text-[#996300]', bookable: false };
+            }
+            return { text: 'พร้อมรับนัด', badge: 'bg-[#E8F6EE] text-[#237749]', bookable: true };
+        }
+
+        function scheduleSummary(doctor) {
+            const schedules = doctor.schedules || [];
+            if (schedules.length === 0) {
+                return { date: 'ยังไม่มีตารางออกตรวจ', time: 'กรุณาตรวจสอบอีกครั้งภายหลัง' };
+            }
+            const first = schedules.find(s => !s.isBooked) || schedules[0];
+            return {
+                date: thaiDate(first.availableDate),
+                time: `${first.startTime} - ${first.endTime} น.`
+            };
+        }
+
+        function renderDepartments() {
+            const previous = departmentInput.value;
+            const values = [...new Set(doctors.map(d => d.department).filter(Boolean))]
+                .sort((a, b) => a.localeCompare(b, 'th'));
+            departmentInput.replaceChildren(new Option('ทุกสาขาการรักษา', ''));
+            values.forEach(value => departmentInput.add(new Option(value, value)));
+            if (values.includes(previous)) departmentInput.value = previous;
+        }
+
+        function showError(message) {
+            errorElement.textContent = message;
+            errorElement.classList.remove('hidden');
+        }
+
+        function renderDoctors() {
+            const keyword = nameInput.value.trim().toLocaleLowerCase('th');
+            const department = departmentInput.value;
+            const selectedDate = dateInput.value;
+            const matching = doctors.filter(doctor => {
+                const text = `${doctor.docName} ${doctor.specialization} ${doctor.department}`
+                    .toLocaleLowerCase('th');
+                return (!keyword || text.includes(keyword)) &&
+                    (!department || doctor.department === department) &&
+                    (!selectedDate || (doctor.schedules || []).length > 0);
+            });
+
+            countElement.textContent = `พบแพทย์ ${matching.length} ท่าน`;
+            if (matching.length === 0) {
+                listElement.innerHTML = '<div class="col-span-full text-center py-16 rounded-2xl border border-[#E4EDF4] bg-[#F5F9FC] text-[#718497]">ไม่พบแพทย์ตามเงื่อนไขที่เลือก</div>';
+                return;
+            }
+
+            listElement.innerHTML = matching.map(doctor => {
+                const status = doctorStatus(doctor);
+                const schedule = scheduleSummary(doctor);
+                const doctorId = escapeHtml(doctor.id);
+                return `
+          <article class="min-h-[244px] bg-white border border-[#E4EDF4] rounded-[15px] p-5 flex flex-col">
+            <div class="flex gap-4 items-start mb-3">
+              <div class="shrink-0 w-[78px] h-[78px] rounded-full bg-[#EAF6FC] flex items-center justify-center text-[#488DB4]">
+                <i data-lucide="user-round" class="w-11 h-11 stroke-[1.6]"></i>
+              </div>
+              <div class="min-w-0">
+                <h3 class="text-[#022F56] text-[17px] font-semibold leading-snug mb-1">${escapeHtml(doctor.docName)}</h3>
+                <p class="text-[#488DB4] text-sm mb-2">${escapeHtml(doctor.specialization)}</p>
+                <span class="inline-flex px-3 py-1 rounded-full text-[11px] font-semibold ${status.badge}">${status.text}</span>
+              </div>
+            </div>
+            <p class="text-[#718497] text-[13px] mb-3 line-clamp-2">${escapeHtml(doctor.department)}</p>
+            <div class="border-t border-[#E4EDF4] pt-3 mt-auto flex items-end justify-between gap-2">
+              <div class="min-w-0">
+                <p class="text-[#022F56] text-[13px] flex gap-1.5 items-center mb-1"><i data-lucide="clock-3" class="w-4 h-4 shrink-0"></i>${escapeHtml(schedule.date)}</p>
+                <p class="text-[#718497] text-[13px]">${escapeHtml(schedule.time)}</p>
+              </div>
+              ${isAdminDoctorViewer ? (adminDoctorReady ? `
+                <div class="flex flex-wrap gap-2 justify-end">
+                    <button type="button" data-admin-action="edit" data-admin-doctor-id="${doctorId}"
+                        class="px-3 py-2 border border-[#BFD5E3] text-[#165B7B] text-xs font-semibold rounded-lg hover:bg-[#F5F9FC]">แก้ไข</button>
+                    <button type="button" data-admin-action="schedule" data-admin-doctor-id="${doctorId}"
+                        class="px-3 py-2 border border-[#BFD5E3] text-[#165B7B] text-xs font-semibold rounded-lg hover:bg-[#F5F9FC]">ตารางเวลา</button>
+                    <button type="button" data-admin-action="toggle" data-admin-doctor-id="${doctorId}"
+                        class="px-3 py-2 text-xs font-semibold rounded-lg ${doctor.status === 'active' ? 'bg-rose-50 text-rose-700 hover:bg-rose-100' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'}">${doctor.status === 'active' ? 'ปิดรับนัด' : 'เปิดรับนัด'}</button>
+                <button type="button" data-admin-action="archive" data-admin-doctor-id="${doctorId}" class="px-3 py-2 text-xs font-semibold rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100"> นำออกจากรายชื่อ </button>
+                        </div>` : `<span class="shrink-0 text-xs text-[#718497]">กำลังตรวจสอบสิทธิ์ Admin...</span>`) : `
+              <button type="button" data-doctor-id="${doctorId}" ${status.bookable ? '' : 'disabled'}
+                class="shrink-0 min-w-[120px] px-3 h-11 rounded-[9px] text-sm font-semibold transition ${status.bookable ? 'text-white bg-[#165B7B] hover:bg-[#0E4564]' : 'bg-[#F0F4F7] text-[#718497] cursor-not-allowed'}">
+                ${status.bookable ? 'จองคิว →' : 'จองไม่ได้'}
+              </button>`}
+              
+            </div>
+          </article>`;
+            }).join('');
+            if (window.lucide) window.lucide.createIcons();
+        }
+
+        async function loadDoctors() {
+            const serial = ++requestSerial;
+            errorElement.classList.add('hidden');
+            countElement.textContent = 'กำลังโหลดข้อมูล...';
+            const dateParam = dateInput.value ? `?date=${encodeURIComponent(dateInput.value)}` : '';
+            try {
+                const response = await fetch(`${API_URL}/doctors${dateParam}`);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const data = await response.json();
+                if (!Array.isArray(data)) throw new Error('รูปแบบข้อมูลแพทย์ไม่ถูกต้อง');
+                if (serial !== requestSerial) return;
+                doctors = data;
+                renderDepartments();
+                renderDoctors();
+            } catch (error) {
+                if (serial !== requestSerial) return;
+                doctors = [];
+                countElement.textContent = 'โหลดข้อมูลไม่สำเร็จ';
+                listElement.innerHTML = '';
+                showError('ดึงรายชื่อแพทย์ไม่สำเร็จ กรุณาตรวจสอบว่า Server รันอยู่และมี API /api/v1/doctors แล้ว');
+                console.error('Load doctors error:', error);
+            }
+        }
+
+        form.addEventListener('submit', (event) => {
+            event.preventDefault();
+            renderDoctors();
+        });
+        dateInput.addEventListener('change', loadDoctors);
+        departmentInput.addEventListener('change', renderDoctors);
+        nameInput.addEventListener('input', renderDoctors);
+
+        // ปุ่มจองคิวของ Patient พาไปยัง booking.html (การบันทึกเกิดขึ้นในหน้าจอง)
+        listElement.addEventListener('click', (event) => {
+            const button = event.target.closest('button[data-doctor-id]');
+            if (!button || button.disabled) return;
+            const selectedDoctor = doctors.find(d => d.id === button.dataset.doctorId);
+            if (selectedDoctor) {
+                const query = new URLSearchParams({
+                    doctorId: selectedDoctor.id
+                });
+
+                if (dateInput.value) {
+                    query.set('date', dateInput.value);
+                }
+
+                window.location.href = `/booking.html?${query.toString()}`;
+            }
+        });
+
+        loadDoctors();
+    </script>
+    <script src="/js/doctor-admin.js"></script>
+</body>
+
+</html>

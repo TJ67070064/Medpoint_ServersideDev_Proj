@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>จองคิวนัดหมาย - MedPoint</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Prompt', sans-serif; background: #fff; }
+    .step-dot { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background:#e4edf4; color:#718497; font-size:13px; font-weight:700; }
+    .step-dot.current { background:#165b7b; color:white; }
+    .step-dot.complete { background:#e8f6ee; color:#237749; }
+    .field { width:100%; min-height:46px; background:white; border:1px solid #e4edf4; border-radius:9px; padding:10px 14px; outline:none; color:#022f56; font-size:14px; }
+    .field:focus { box-shadow:0 0 0 2px #a8cbdd; }
+    .btn-primary { display:inline-flex; align-items:center; justify-content:center; background:#165b7b; color:white; border-radius:9px; padding:11px 24px; font-size:14px; font-weight:600; }
+    .btn-primary:hover:not(:disabled) { background:#0e4564; }
+    .btn-primary:disabled { opacity:0.5; cursor:not-allowed; }
+    .btn-outline { display:inline-flex; align-items:center; justify-content:center; color:#165b7b; background:white; border:1px solid #bfd5e3; border-radius:9px; padding:10px 21px; font-size:14px; font-weight:600; }
+    .btn-outline:hover { background:#f5f9fc; }
+    .calendar-cell { min-height:46px; border-radius:8px; font-size:14px; }
+    .calendar-cell:disabled { color:#c0ced9; cursor:not-allowed; }
+    .calendar-cell:not(:disabled):hover { background:#eaf6fc; }
+    .calendar-cell.selected { background:#165b7b !important; color:white !important; }
+    .slot-btn { border:1px solid #bfd5e3; color:#165b7b; background:white; border-radius:9px; padding:10px 8px; font-size:14px; }
+    .slot-btn:hover { background:#eaf6fc; }
+    .slot-btn.selected { background:#165b7b; color:white; border-color:#165b7b; }
+    .detail-label { color:#718497; font-size:13px; }
+    .detail-value { color:#022f56; font-weight:600; font-size:15px; overflow-wrap:anywhere; }
+  </style>
+</head>
+<body class="text-slate-800 min-h-screen">
+  <header id="navbar" class="bg-white border-b border-slate-200/80 sticky top-0 z-40"></header>
+
+  <main class="max-w-[1200px] mx-auto px-4 sm:px-6 py-8 sm:py-12">
+    <div class="mb-8">
+      <div class="flex items-center gap-2 text-[#718497] text-sm mb-3"><a href="/doctors.html" class="hover:text-[#165b7b]">ค้นหาแพทย์</a><i data-lucide="chevron-right" class="w-4 h-4"></i><span>จองคิวนัดหมาย</span></div>
+      <h1 class="text-[#022f56] font-bold text-3xl sm:text-[42px]">จองคิวนัดหมาย</h1>
+      <p class="text-[#718497] text-sm mt-2">เลือกแพทย์และช่วงเวลาที่สะดวก จากนั้นตรวจสอบรายละเอียดก่อนยืนยัน</p>
+    </div>
+
+    <nav aria-label="ขั้นตอนการจอง" class="flex items-center justify-between gap-1 sm:gap-3 bg-[#f5f9fc] px-3 sm:px-8 py-5 rounded-2xl mb-8">
+      <div class="flex items-center gap-2 sm:gap-3"><span id="dot-1" class="step-dot current">1</span><span class="text-xs sm:text-sm font-semibold text-[#022f56]">เลือกแพทย์</span></div>
+      <div class="flex-1 h-px bg-[#bfd5e3] max-w-14"></div>
+      <div class="flex items-center gap-2 sm:gap-3"><span id="dot-2" class="step-dot">2</span><span class="text-xs sm:text-sm font-semibold text-[#022f56]">วันและเวลา</span></div>
+      <div class="flex-1 h-px bg-[#bfd5e3] max-w-14"></div>
+      <div class="flex items-center gap-2 sm:gap-3"><span id="dot-3" class="step-dot">3</span><span class="text-xs sm:text-sm font-semibold text-[#022f56]">ตรวจสอบและยืนยัน</span></div>
+      <div class="flex-1 h-px bg-[#bfd5e3] max-w-14"></div>
+      <div class="flex items-center gap-2 sm:gap-3"><span id="dot-4" class="step-dot">4</span><span class="text-xs sm:text-sm font-semibold text-[#022f56]">เสร็จสิ้น</span></div>
+    </nav>
+
+    <div id="notice" role="alert" aria-live="polite" class="hidden mb-6 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-900"></div>
+
+    <section id="step-1" class="space-y-5">
+      <div class="rounded-[15px] border border-[#e4edf4] p-5 sm:p-7 bg-white">
+        <div class="flex items-center justify-between flex-wrap gap-4 mb-6">
+          <div><h2 class="text-xl font-semibold text-[#022f56]">เลือกแพทย์ที่ต้องการพบ</h2><p class="text-sm text-[#718497] mt-1">ข้อมูลแพทย์ดึงจากระบบของคลินิก</p></div>
+          <label class="w-full sm:w-72"><span class="sr-only">ค้นหาชื่อแพทย์</span><input id="doctor-search" class="field" placeholder="ค้นหาชื่อแพทย์หรือสาขา" type="search"></label>
+        </div>
+        <div id="doctor-options" class="grid grid-cols-1 md:grid-cols-2 gap-4"><p class="text-[#718497] text-sm">กำลังโหลดรายชื่อแพทย์...</p></div>
+      </div>
+      <div class="flex justify-end"><button id="doctor-next" type="button" class="btn-primary" disabled>ถัดไป: เลือกวันและเวลา <i data-lucide="arrow-right" class="w-4 h-4 ml-2"></i></button></div>
+    </section>
+
+    <section id="step-2" class="hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-[1fr_350px] gap-6">
+        <div class="space-y-5 min-w-0">
+          <div class="rounded-[15px] border border-[#e4edf4] bg-white p-5 sm:p-7 space-y-4">
+            <h2 class="text-[#022f56] font-semibold text-xl">รายละเอียดการนัดหมาย</h2>
+            <div class="grid sm:grid-cols-2 gap-4">
+              <div><label class="block text-[#718497] text-sm mb-2">แผนก / สาขา</label><div id="chosen-department" class="field bg-[#f5f9fc]">–</div></div>
+              <div><label class="block text-[#718497] text-sm mb-2">แพทย์ที่ต้องการพบ</label><div id="chosen-doctor" class="field bg-[#f5f9fc]">–</div></div>
+            </div>
+            <div><label for="service-select" class="block text-[#718497] text-sm mb-2">ประเภทบริการ</label><select id="service-select" class="field"><option value="">ไม่ระบุประเภทบริการ (30 นาที)</option></select><p class="text-xs text-[#718497] mt-2">ช่วงเวลาที่จองได้ขึ้นอยู่กับระยะเวลาของบริการที่เลือก</p></div>
+          </div>
+          <div class="rounded-[15px] border border-[#e4edf4] bg-white p-5 sm:p-7">
+            <h2 class="text-[#022f56] font-semibold text-xl mb-4">เลือกวันที่ต้องการนัดหมาย</h2>
+            <div class="flex items-center justify-between mb-5">
+              <button id="prev-month" type="button" class="p-2 rounded-lg hover:bg-[#eaf6fc]" aria-label="เดือนก่อนหน้า"><i data-lucide="chevron-left" class="w-5 h-5"></i></button>
+              <h3 id="calendar-title" class="text-[#022f56] font-semibold"></h3>
+              <button id="next-month" type="button" class="p-2 rounded-lg hover:bg-[#eaf6fc]" aria-label="เดือนถัดไป"><i data-lucide="chevron-right" class="w-5 h-5"></i></button>
+            </div>
+            <div class="grid grid-cols-7 gap-1.5 text-center text-xs text-[#718497] mb-2"><span>จ.</span><span>อ.</span><span>พ.</span><span>พฤ.</span><span>ศ.</span><span>ส.</span><span>อา.</span></div>
+            <div id="calendar-days" class="grid grid-cols-7 gap-1.5"></div>
+            <p class="mt-4 text-[#718497] text-xs">วันที่กดเลือกได้ คือวันที่แพทย์มีช่วงออกตรวจที่ยังเปิดรับการจอง</p>
+          </div>
+          <div class="rounded-[15px] border border-[#e4edf4] bg-white p-5 sm:p-7">
+            <h2 class="text-[#022f56] font-semibold text-xl mb-4">ช่วงเวลาที่ว่าง</h2>
+            <div id="slot-options" class="grid grid-cols-3 sm:grid-cols-4 gap-3"><p class="col-span-full text-[#718497] text-sm">กรุณาเลือกวันที่ก่อน</p></div>
+          </div>
+        </div>
+        <aside class="rounded-[15px] border border-[#e4edf4] bg-[#f5f9fc] p-5 sm:p-6 h-fit lg:sticky lg:top-24">
+          <h2 class="text-[#022f56] text-xl font-semibold mb-5">สรุปการนัดหมาย</h2>
+          <div class="space-y-4">
+            <div><div class="detail-label">แพทย์ที่เลือก</div><div id="summary-doctor" class="detail-value">–</div></div>
+            <div><div class="detail-label">วันนัดหมาย</div><div id="summary-date" class="detail-value">ยังไม่ได้เลือก</div></div>
+            <div><div class="detail-label">เวลานัดหมาย</div><div id="summary-time" class="detail-value">ยังไม่ได้เลือก</div></div>
+            <div><div class="detail-label">ประเภทบริการ</div><div id="summary-service" class="detail-value">ไม่ระบุ</div></div>
+          </div>
+          <p class="mt-6 text-xs text-[#165b7b] border-t border-[#bfd5e3] pt-4">โปรดมาถึงก่อนเวลานัดอย่างน้อย 15 นาที</p>
+        </aside>
+      </div>
+      <div class="flex justify-between mt-7 gap-3"><button type="button" id="time-back" class="btn-outline">ย้อนกลับ</button><button id="time-next" type="button" class="btn-primary" disabled>ถัดไป: ตรวจสอบข้อมูล <i data-lucide="arrow-right" class="w-4 h-4 ml-2"></i></button></div>
+    </section>
+
+    <section id="step-3" class="hidden">
+      <div class="max-w-[950px] mx-auto space-y-5">
+        <div class="rounded-[15px] border border-[#e4edf4] p-6 sm:p-8">
+          <h2 class="text-[#022f56] font-semibold text-xl">ตรวจสอบรายละเอียดการนัดหมาย</h2>
+          <p class="text-[#718497] text-sm mt-1 mb-6">โปรดตรวจสอบข้อมูลที่เลือกไว้ก่อนยืนยัน</p>
+          <div class="grid sm:grid-cols-2 gap-x-9 gap-y-5" id="review-fields"></div>
+        </div>
+        <div class="rounded-[15px] border border-[#e4edf4] p-6 sm:p-8">
+          <h2 class="text-[#022f56] font-semibold text-xl mb-1">ข้อมูลผู้จอง</h2>
+          <p class="text-[#718497] text-xs mb-5">อ้างอิงจากบัญชีผู้ใช้ที่เข้าสู่ระบบ</p>
+          <div id="patient-fields" class="grid sm:grid-cols-2 gap-5"></div>
+        </div>
+        <div class="rounded-[15px] bg-[#f5f9fc] p-5 sm:p-7">
+          <h2 class="text-[#022f56] font-semibold mb-2">ก่อนยืนยัน โปรดตรวจสอบ</h2>
+          <p class="text-sm text-[#718497] mb-4">เมื่อกดยืนยัน ระบบจะบันทึกคำขอนัดหมายลงฐานข้อมูล และมีสถานะเริ่มต้นเป็น “รอยืนยัน”</p>
+          <label class="flex items-start gap-3 text-sm text-[#022f56] cursor-pointer"><input id="review-check" type="checkbox" class="w-5 h-5 accent-[#165b7b] mt-0.5 shrink-0"/><span>ฉันได้ตรวจสอบรายละเอียดการนัดหมายแล้ว</span></label>
+        </div>
+        <div id="login-warning" class="hidden p-4 bg-amber-50 border border-amber-200 text-sm rounded-xl text-amber-900">กรุณาเข้าสู่ระบบบัญชี PATIENT ก่อนยืนยัน <a class="font-semibold underline" href="/auth.html">เข้าสู่ระบบ</a></div>
+        <div class="flex justify-between gap-3"><button type="button" id="review-back" class="btn-outline">ย้อนกลับ</button><button type="button" id="confirm-booking" class="btn-primary" disabled>ยืนยันการนัดหมาย <i data-lucide="check" class="w-4 h-4 ml-2"></i></button></div>
+      </div>
+    </section>
+
+    <section id="step-4" class="hidden max-w-[920px] mx-auto">
+      <div class="border border-[#e4edf4] bg-white rounded-[20px] p-6 sm:p-10 text-center">
+        <div class="w-20 h-20 mx-auto mb-5 rounded-full bg-[#e8f6ee] text-[#237749] grid place-items-center"><i data-lucide="check-circle-2" class="w-11 h-11"></i></div>
+        <h2 class="text-[#022f56] text-2xl sm:text-3xl font-bold">จองคิวสำเร็จแล้ว!</h2>
+        <p class="text-[#718497] text-sm mt-3">ระบบบันทึกคำขอนัดหมายของคุณเรียบร้อยแล้ว • สถานะรอเจ้าหน้าที่ยืนยัน</p>
+        <div class="bg-[#f5f9fc] border border-[#e4edf4] rounded-xl p-5 mt-7 mx-auto max-w-xl">
+          <p class="text-[#718497] text-sm mb-2">รหัสอ้างอิงนัดหมาย (UUID)</p>
+          <p id="success-reference" class="text-[#022f56] font-bold text-sm sm:text-base break-all select-all">–</p>
+          <button id="copy-reference" class="btn-outline mt-4" type="button"><i data-lucide="copy" class="w-4 h-4 mr-2"></i>คัดลอกรหัสอ้างอิง</button>
+          <p class="text-xs text-[#718497] mt-4">ยังไม่ใช่เลขคิว A012 — ต้องใช้รูปแบบร่วมกับระบบ Doctor/Staff ก่อน</p>
+        </div>
+        <div id="success-fields" class="text-left grid sm:grid-cols-2 gap-5 mt-8 border-t border-[#e4edf4] pt-7"></div>
+        <p class="text-[#165b7b] text-xs mt-7">โปรดมาถึงก่อนเวลานัดอย่างน้อย 15 นาที</p>
+        <div class="flex flex-wrap justify-center gap-3 mt-7"><a href="/appointments.html" class="btn-primary">ดูประวัติการนัดหมาย</a><a href="/index.html" class="btn-outline">กลับสู่หน้าหลัก</a></div>
+      </div>
+    </section>
+  </main>
+
+  <script src="/js/app.js"></script>
+  <script>
+    renderNavbar('booking');
+
+    const auth = getAuth();
+    const state = { page: 1, doctor: null, date: '', slot: null, serviceId: '', booked: null, submitting: false };
+    const params = new URLSearchParams(location.search);
+    let doctors = [];
+    let services = [];
+    let slotsSerial = 0;
+    let month = new Date().getUTCMonth();
+    let year = new Date().getUTCFullYear();
+    let activeSlots = [];
+    const bangkokToday = new Date(Date.now() + 7 * 3600_000).toISOString().slice(0, 10);
+    const $ = (id) => document.getElementById(id);
+
+    const safe = (value) => String(value ?? '').replace(/[&<>"']/g, (character) => ({
+      '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
+    }[character]));
+    const bangkokISO = (date) => new Intl.DateTimeFormat('sv-SE', {
+      timeZone:'Asia/Bangkok', year:'numeric', month:'2-digit', day:'2-digit'
+    }).format(new Date(date));
+    const dateText = (day) => day ? new Intl.DateTimeFormat('th-TH-u-ca-buddhist', {
+      timeZone: 'Asia/Bangkok', weekday:'long', day:'numeric', month:'long', year:'numeric'
+    }).format(new Date(`${day}T12:00:00+07:00`)) : 'ยังไม่ได้เลือก';
+    const label = (title, value) => `<div><p class="detail-label mb-1">${safe(title)}</p><p class="detail-value">${safe(value)}</p></div>`;
+    const selectedService = () => services.find((item) => item.id === state.serviceId) || null;
+
+    function showNotice(message, type = 'warning') {
+      $('notice').textContent = message;
+      $('notice').className = `mb-6 rounded-xl border px-5 py-4 text-sm ${type === 'error' ? 'border-red-200 bg-red-50 text-red-700' : 'border-amber-200 bg-amber-50 text-amber-900'}`;
+    }
+    function clearNotice() { $('notice').classList.add('hidden'); }
+    function go(page) {
+      state.page = page;
+      for (let i = 1; i <= 4; i += 1) {
+        $(`step-${i}`).classList.toggle('hidden', page !== i);
+        $(`dot-${i}`).className = `step-dot ${i < page ? 'complete' : i === page ? 'current' : ''}`;
+        $(`dot-${i}`).textContent = i < page ? '✓' : i;
+      }
+      clearNotice();
+      window.scrollTo({ top: 0, behavior: 'instant' });
+      if (window.lucide) window.lucide.createIcons();
+    }
+
+    function enabledDates() {
+      if (!state.doctor) return new Set();
+      return new Set((state.doctor.schedules || [])
+        .filter((slot) => !slot.isBooked)
+        .map((slot) => bangkokISO(slot.availableDate))
+        .filter((day) => day >= bangkokToday));
+    }
+    function renderDoctors() {
+      const query = $('doctor-search').value.trim().toLocaleLowerCase('th');
+      const filtered = doctors.filter((doctor) => [doctor.docName, doctor.specialization, doctor.department]
+        .filter(Boolean).join(' ').toLocaleLowerCase('th').includes(query));
+      $('doctor-options').innerHTML = filtered.length ? filtered.map((doctor) => {
+        const isActive = String(doctor.status).toLowerCase() === 'active';
+        const chosen = state.doctor?.id === doctor.id;
+        return `<button type="button" data-select-doctor="${safe(doctor.id)}" ${!isActive ? 'disabled' : ''}
+          class="text-left border rounded-[13px] p-4 flex gap-3 items-start ${chosen ? 'border-[#165b7b] bg-[#eaf6fc]' : 'border-[#e4edf4] hover:bg-[#f5f9fc]'} ${isActive ? '' : 'opacity-50 cursor-not-allowed'}">
+          <span class="w-14 h-14 shrink-0 rounded-full bg-[#eaf6fc] grid place-items-center text-[#488db4]"><i data-lucide="user-round" class="w-8 h-8"></i></span>
+          <span class="min-w-0"><strong class="block text-[#022f56] text-sm font-semibold">${safe(doctor.docName)}</strong><span class="block text-[#488db4] text-xs mt-1">${safe(doctor.specialization)}</span><span class="block text-[#718497] text-xs mt-2">${safe(doctor.department)}</span>${!isActive ? '<span class="text-xs text-red-600">งดรับนัด</span>' : ''}</span>
+          ${chosen ? '<i data-lucide="check-circle-2" class="w-5 h-5 text-[#165b7b] ml-auto shrink-0"></i>' : ''}
+        </button>`;
+      }).join('') : '<p class="text-[#718497] text-sm py-7 col-span-full">ไม่พบแพทย์ตามที่ค้นหา</p>';
+      $('doctor-next').disabled = !state.doctor;
+      if (window.lucide) window.lucide.createIcons();
+    }
+
+    function fillServices() {
+      const select = $('service-select');
+      const choices = services.filter((item) => !item.docName || item.docName === state.doctor?.docName);
+      select.innerHTML = `<option value="">ไม่ระบุประเภทบริการ (30 นาที)</option>` + choices.map((item) => `<option value="${safe(item.id)}">${safe(item.serviceName)} · ${Number(item.durationMinutes)} นาที · ${Number(item.price).toLocaleString('th-TH')} บาท</option>`).join('');
+      if (choices.some((item) => item.id === state.serviceId)) select.value = state.serviceId;
+      else { state.serviceId = ''; select.value = ''; }
+      $('chosen-department').textContent = state.doctor?.department || '–';
+      $('chosen-doctor').textContent = state.doctor?.docName || '–';
+      updateSummary();
+    }
+    function updateSummary() {
+      $('summary-doctor').textContent = state.doctor?.docName || '–';
+      $('summary-date').textContent = dateText(state.date);
+      $('summary-time').textContent = state.slot ? `${state.slot.startTime} – ${state.slot.endTime} น.` : 'ยังไม่ได้เลือก';
+      $('summary-service').textContent = selectedService()?.serviceName || 'ไม่ระบุประเภทบริการ (30 นาที)';
+      $('time-next').disabled = !(state.doctor && state.date && state.slot);
+    }
+    function setCalendarMonth(isoDay) {
+      if (/^\d{4}-\d{2}-\d{2}$/.test(isoDay || '')) {
+        year = Number(isoDay.slice(0, 4)); month = Number(isoDay.slice(5, 7)) - 1;
+      }
+    }
+    function renderCalendar() {
+      $('calendar-title').textContent = new Intl.DateTimeFormat('th-TH-u-ca-buddhist', {
+        month:'long', year:'numeric', timeZone:'UTC'
+      }).format(new Date(Date.UTC(year, month, 1)));
+      const dates = enabledDates();
+      const count = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+      const offset = (new Date(Date.UTC(year, month, 1)).getUTCDay() + 6) % 7;
+      const items = Array.from({ length: offset }, () => '<span aria-hidden="true"></span>');
+      for (let day = 1; day <= count; day++) {
+        const iso = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const available = dates.has(iso);
+        const chosen = iso === state.date;
+        items.push(`<button type="button" data-day="${iso}" class="calendar-cell ${chosen ? 'selected' : ''} ${available ? 'font-semibold text-[#022f56] border border-[#e4edf4]' : ''}" ${available ? '' : 'disabled'} aria-label="${iso}">${day}</button>`);
+      }
+      $('calendar-days').innerHTML = items.join('');
+    }
+
+    function selectDoctor(doctor) {
+      state.doctor = doctor;
+      state.date = '';
+      state.slot = null;
+      state.serviceId = '';
+      activeSlots = [];
+      const first = [...enabledDates()].sort()[0];
+      setCalendarMonth(first || bangkokToday);
+      fillServices();
+      renderDoctors();
+      renderCalendar();
+      $('slot-options').innerHTML = '<p class="col-span-full text-[#718497] text-sm">กรุณาเลือกวันที่ก่อน</p>';
+      updateSummary();
+    }
+    function renderSlots() {
+      $('slot-options').innerHTML = activeSlots.length ? activeSlots.map((slot) => `<button type="button" class="slot-btn ${state.slot?.startTime === slot.startTime ? 'selected' : ''}" data-slot="${safe(slot.startTime)}">${safe(slot.startTime)}</button>`).join('')
+        : '<p class="col-span-full text-[#718497] text-sm">ไม่มีช่วงเวลาว่างในวันที่เลือก ลองเลือกวันอื่น</p>';
+      updateSummary();
+    }
+    async function loadSlots() {
+      const serial = ++slotsSerial;
+      state.slot = null; activeSlots = []; updateSummary();
+      if (!state.doctor || !state.date) { renderSlots(); return; }
+      $('slot-options').innerHTML = '<p class="col-span-full text-[#718497] text-sm">กำลังตรวจสอบเวลาว่าง...</p>';
+      const query = new URLSearchParams({ doctorId:state.doctor.id, date:state.date });
+      if (state.serviceId) query.set('serviceId', state.serviceId);
+      try {
+        const response = await fetch(`${API_URL}/appointments/availability?${query}`);
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || 'โหลดช่วงเวลาว่างไม่สำเร็จ');
+        if (serial !== slotsSerial) return;
+        activeSlots = Array.isArray(data.slots) ? data.slots : [];
+        renderSlots();
+      } catch (error) {
+        if (serial !== slotsSerial) return;
+        activeSlots = []; renderSlots();
+        showNotice(error.message, 'error');
+      }
+    }
+    async function selectDate(date) {
+      state.date = date; state.slot = null;
+      renderCalendar(); updateSummary();
+      clearNotice();
+      await loadSlots();
+    }
+    function showReview() {
+      const service = selectedService();
+      $('review-fields').innerHTML = [
+        label('แพทย์ผู้ให้บริการ', state.doctor?.docName),
+        label('แผนก / สาขา', state.doctor?.specialization || state.doctor?.department),
+        label('วันที่นัดหมาย', dateText(state.date)),
+        label('เวลานัดหมาย', `${state.slot?.startTime} – ${state.slot?.endTime} น.`),
+        label('ประเภทบริการ', service?.serviceName || 'ไม่ระบุ (30 นาที)'),
+        label('ค่าบริการ', service ? `${Number(service.price).toLocaleString('th-TH')} บาท` : 'ไม่ระบุ'),
+      ].join('');
+      $('patient-fields').innerHTML = [
+        label('ชื่อผู้จอง', auth.user?.full_name || 'กรุณาเข้าสู่ระบบ'),
+        label('เบอร์ติดต่อ', auth.user?.phone || 'ไม่มีข้อมูลเบอร์ติดต่อ'),
+      ].join('');
+      const eligible = Boolean(auth.token && auth.user?.role === 'PATIENT');
+      $('login-warning').classList.toggle('hidden', eligible);
+      $('review-check').checked = false;
+      $('confirm-booking').disabled = true;
+      go(3);
+    }
+    function showSuccess(booking) {
+      $('success-reference').textContent = booking.referenceCode;
+      const item = booking.appointment;
+      $('success-fields').innerHTML = [
+        label('ชื่อแพทย์', item.doctor?.docName),
+        label('วันที่นัดหมาย', dateText(state.date)),
+        label('เวลานัดหมาย', `${state.slot.startTime} – ${state.slot.endTime} น.`),
+        label('บริการ', item.service?.serviceName || 'ไม่ระบุ'),
+        label('ผู้จอง', auth.user?.full_name || '–'),
+        label('เบอร์ติดต่อ', auth.user?.phone || 'ไม่ระบุ'),
+      ].join('');
+      go(4);
+    }
+
+    $('doctor-options').addEventListener('click', (event) => {
+      const button = event.target.closest('[data-select-doctor]');
+      if (!button || button.disabled) return;
+      const doctor = doctors.find((item) => item.id === button.dataset.selectDoctor);
+      if (doctor) selectDoctor(doctor);
+    });
+    $('doctor-search').addEventListener('input', renderDoctors);
+    $('doctor-next').addEventListener('click', () => { if (state.doctor) go(2); });
+    $('time-back').addEventListener('click', () => go(1));
+    $('time-next').addEventListener('click', () => { if (state.slot && state.doctor && state.date) showReview(); });
+    $('review-back').addEventListener('click', () => go(2));
+    $('review-check').addEventListener('change', () => {
+      $('confirm-booking').disabled = !$('review-check').checked || !auth.token || auth.user?.role !== 'PATIENT' || state.submitting;
+    });
+    $('service-select').addEventListener('change', async (event) => {
+      state.serviceId = event.target.value; clearNotice();
+      updateSummary(); await loadSlots();
+    });
+    $('calendar-days').addEventListener('click', (event) => {
+      const day = event.target.closest('[data-day]');
+      if (day && !day.disabled) selectDate(day.dataset.day);
+    });
+    $('slot-options').addEventListener('click', (event) => {
+      const button = event.target.closest('[data-slot]');
+      if (!button) return;
+      state.slot = activeSlots.find((slot) => slot.startTime === button.dataset.slot) || null;
+      renderSlots();
+    });
+    $('prev-month').addEventListener('click', () => {
+      const target = new Date(Date.UTC(year, month - 1, 1));
+      const monthStart = `${target.getUTCFullYear()}-${String(target.getUTCMonth()+1).padStart(2, '0')}-01`;
+      if (monthStart.slice(0,7) < bangkokToday.slice(0,7)) return;
+      year = target.getUTCFullYear(); month = target.getUTCMonth(); renderCalendar();
+    });
+    $('next-month').addEventListener('click', () => {
+      const target = new Date(Date.UTC(year, month + 1, 1));
+      year = target.getUTCFullYear(); month = target.getUTCMonth(); renderCalendar();
+    });
+    $('confirm-booking').addEventListener('click', async () => {
+      if (state.submitting || !state.doctor || !state.date || !state.slot || !$('review-check').checked) return;
+      state.submitting = true;
+      $('confirm-booking').disabled = true;
+      $('confirm-booking').textContent = 'กำลังบันทึกนัดหมาย...';
+      try {
+        const response = await fetch(`${API_URL}/appointments`, {
+          method:'POST',
+          headers:{ 'Content-Type':'application/json', Authorization:`Bearer ${auth.token}` },
+          body:JSON.stringify({ doctorId:state.doctor.id, date:state.date, time:state.slot.startTime, serviceId:state.serviceId || null }),
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          if (response.status === 409) {
+            go(2); await loadSlots();
+            throw new Error(data.message || 'มีผู้จองเวลานี้ไปแล้ว กรุณาเลือกเวลาใหม่');
+          }
+          throw new Error(data.message || `บันทึกนัดหมายไม่สำเร็จ (${response.status})`);
+        }
+        if (!data.appointment?.id || !data.referenceCode) throw new Error('ข้อมูลตอบกลับไม่สมบูรณ์ กรุณาตรวจสอบประวัติก่อนทำรายการซ้ำ');
+        state.booked = data;
+        showSuccess(data);
+      } catch (error) {
+        showNotice(`${error.message} หากไม่แน่ใจว่าบันทึกสำเร็จหรือไม่ ให้ตรวจสอบประวัติการนัดหมายก่อนกดอีกครั้ง`, 'error');
+      } finally {
+        state.submitting = false;
+        $('confirm-booking').textContent = 'ยืนยันการนัดหมาย';
+        $('confirm-booking').disabled = !$('review-check').checked;
+        if (window.lucide) window.lucide.createIcons();
+      }
+    });
+    $('copy-reference').addEventListener('click', async () => {
+      if (!state.booked?.referenceCode) return;
+      try { await navigator.clipboard.writeText(state.booked.referenceCode); $('copy-reference').textContent = 'คัดลอกแล้ว ✓'; }
+      catch { showNotice('คัดลอกอัตโนมัติไม่ได้ กรุณาเลือกข้อความรหัสอ้างอิงเพื่อคัดลอก', 'warning'); }
+    });
+
+    async function init() {
+      try {
+        const [doctorResponse, serviceResponse] = await Promise.all([
+          fetch(`${API_URL}/doctors`), fetch(`${API_URL}/services`),
+        ]);
+        if (!doctorResponse.ok) throw new Error('โหลดแพทย์ไม่ได้ ตรวจสอบว่าเพิ่ม doctorRoutes จากงานก่อนแล้ว');
+        doctors = await doctorResponse.json();
+        if (!Array.isArray(doctors)) throw new Error('ข้อมูลแพทย์มีรูปแบบไม่ถูกต้อง');
+        services = serviceResponse.ok ? await serviceResponse.json() : [];
+        if (!Array.isArray(services)) services = [];
+        renderDoctors();
+        const doctor = doctors.find((item) => item.id === params.get('doctorId') && String(item.status).toLowerCase() === 'active');
+        if (doctor) {
+          selectDoctor(doctor);
+          go(2);
+          const day = params.get('date');
+          if (day && enabledDates().has(day)) { setCalendarMonth(day); renderCalendar(); await selectDate(day); }
+        }
+      } catch (error) {
+        $('doctor-options').textContent = 'ไม่สามารถโหลดรายชื่อแพทย์ได้';
+        showNotice(error.message, 'error');
+      }
+    }
+    init();
+  </script>
+</body>
+</html>

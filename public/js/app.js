@@ -79,6 +79,7 @@ function renderNavbar(activePage) {
       <div class="flex items-center gap-6 md:gap-8">
         <nav class="hidden md:flex items-center gap-7 text-[15px]">
           <a href="/index.html" class="${linkClass('home')}">หน้าหลัก</a>
+          <a href="/doctors.html" class="${linkClass('doctors')}">ค้นหาแพทย์</a>
           <a href="/screening.html" class="${linkClass('screening')}">คัดกรองอาการ</a>
           <a href="/services.html" class="${linkClass('services')}">บริการและแพ็กเกจ</a>
           ${canManageQueue ? `<a href="/queue.html" class="${linkClass('queue')}">จัดการคิวตรวจ</a>` : ''}
@@ -118,6 +119,7 @@ function renderNavbar(activePage) {
                     <a href="/services.html" class="block px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-lg">บริการและแพ็กเกจ</a>
                     <a href="/screening.html" class="block px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-lg">แบบฟอร์มคัดกรอง</a>
                     ${canManageQueue ? '<a href="/queue.html" class="block px-3 py-2 text-sm text-[#134E6F] hover:bg-slate-50 rounded-lg">จัดการคิวตรวจ</a>' : ''}
+                    <a href="/appointments.html" class="block px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-lg">ประวัติการนัดหมาย</a>
                     ${
                       isAdmin
                         ? `
