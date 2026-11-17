@@ -153,6 +153,12 @@
           </select></label>
       </section>
       <p id="pending-note" class="-mt-1 mb-[15px] text-[10px] text-[#7F95A6]" hidden></p>
+      <section id="pending-section" class="mb-5 rounded-2xl border border-[#E3EDF3] bg-white p-5" hidden>
+        <h2 class="mb-3 text-sm font-semibold text-[#0F354A]">
+          นัดหมายรอการยืนยัน
+        </h2>
+        <div id="pending-items" class="space-y-3"></div>
+      </section>
       <div id="error-message"
         class="mb-4 rounded-xl border border-[#C9E2F0] bg-[#EDF8FD] px-[18px] py-[15px] text-xs leading-loose text-[#376E8C] [&_a]:text-[#134E6F] [&_a]:underline !border-rose-200 !bg-rose-50 !text-rose-700"
         role="alert" hidden></div>
@@ -302,6 +308,7 @@
         online: false,
         stopped: false,
         request: 0,
+        canEditQueue: false,
       };
       let controller, searchTimer, toastTimer;
       const thaiDate = (value) =>
@@ -383,7 +390,11 @@
         };
         return `<span class="inline-flex whitespace-nowrap rounded-full px-2 py-1 text-[9px] font-normal leading-snug ${colors[status]}">${labels[status]}</span>`;
       }
+
       function action(row) {
+        if (!state.canEditQueue) {
+          return '<span class="text-slate-400 text-xs">ดูสถานะเท่านั้น</span>';
+        }
         const base =
           "w-full min-w-[92px] rounded-md border px-2.5 py-2 text-[10px] leading-snug transition hover:brightness-95 disabled:cursor-not-allowed disabled:border-slate-100 disabled:bg-slate-100 disabled:text-slate-400";
         let disabled =
@@ -450,6 +461,45 @@
         $("pending-note").hidden = !d.pendingCount;
         $("pending-note").textContent =
           `มีนัดหมายรอยืนยัน ${d.pendingCount} รายการ ซึ่งยังไม่เข้าคิวตรวจ`;
+
+        $("pending-section").hidden = !d.pendingItems?.length;
+
+        $("pending-items").innerHTML = (d.pendingItems || [])
+          .map(a => `
+    <div class="flex flex-col gap-3 rounded-xl border border-slate-200 p-4 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <p class="text-sm font-semibold text-[#0F354A]">
+          ${escapeHtml(a.patient.full_name)}
+        </p>
+        <p class="mt-1 text-xs text-slate-500">
+          แพทย์: ${escapeHtml(a.doctor.docName)}
+        </p>
+        <p class="mt-1 text-xs text-slate-500">
+          เวลานัด: ${time(a.appointmentDate)} น.
+        </p>
+        <p class="mt-1 text-xs text-amber-600">
+          รอการยืนยัน
+        </p>
+      </div>
+
+      ${state.canEditQueue ? `
+        <button
+          type="button"
+          data-id="${escapeHtml(a.id)}"
+          data-target="confirmed"
+          class="rounded-lg bg-[#134E6F] px-4 py-2 text-xs font-medium text-white disabled:opacity-40"
+          ${new Date(a.appointmentDate).getTime() <= Date.now() ? "disabled" : ""}
+        >
+          ยืนยันนัดหมาย
+        </button>
+      ` : `
+        <span class="text-xs text-slate-400">
+          ดูสถานะเท่านั้น
+        </span>
+      `}
+    </div>
+  `).join("");
+
         $("queue-rows").innerHTML = d.items.length
           ? d.items
             .map(
@@ -569,6 +619,7 @@
       async function changeStatus(id, target) {
         if (state.saving || state.loading || !state.online) return;
         const row = [
+          ...(state.data.pendingItems || []),
           ...state.data.items,
           state.data.current,
           state.data.next,
@@ -660,6 +711,7 @@
         }
         try {
           const { user } = await api("/auth/me");
+          state.canEditQueue = user.role === "DOCTOR_STAFF";
           if (!["ADMIN", "DOCTOR_STAFF"].includes(user.role)) {
             accessMessage(
               "หน้านี้สำหรับแพทย์ เจ้าหน้าที่ และผู้ดูแลระบบเท่านั้น",

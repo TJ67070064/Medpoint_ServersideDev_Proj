@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -8,14 +9,19 @@
   <script src="https://unpkg.com/lucide@latest"></script>
   <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    body { font-family: 'Prompt', sans-serif; background-color: #F8FAFC; }
+    body {
+      font-family: 'Prompt', sans-serif;
+      background-color: #F8FAFC;
+    }
   </style>
 </head>
+
 <body class="text-slate-800 min-h-screen">
   <header id="navbar" class="bg-white border-b border-slate-200/80"></header>
 
   <main class="max-w-md mx-auto px-4 py-10">
-    <div id="already-logged-in" class="hidden mb-5 bg-[#DCEEF7] border border-[#B3D8EC] rounded-2xl p-4 flex items-center justify-between gap-3">
+    <div id="already-logged-in"
+      class="hidden mb-5 bg-[#DCEEF7] border border-[#B3D8EC] rounded-2xl p-4 flex items-center justify-between gap-3">
       <div class="text-xs text-[#0F354A]">
         เข้าสู่ระบบอยู่แล้วในชื่อ <b id="current-user-name"></b>
       </div>
@@ -34,10 +40,12 @@
       </div>
 
       <div class="grid grid-cols-2 bg-slate-100 p-1 rounded-xl mb-6">
-        <button id="tab-login" onclick="switchTab('login')" class="py-2 rounded-lg text-sm font-semibold bg-[#134E6F] text-white shadow-sm transition">
+        <button id="tab-login" onclick="switchTab('login')"
+          class="py-2 rounded-lg text-sm font-semibold bg-[#134E6F] text-white shadow-sm transition">
           เข้าสู่ระบบ
         </button>
-        <button id="tab-register" onclick="switchTab('register')" class="py-2 rounded-lg text-sm font-semibold text-slate-500 hover:text-slate-800 transition">
+        <button id="tab-register" onclick="switchTab('register')"
+          class="py-2 rounded-lg text-sm font-semibold text-slate-500 hover:text-slate-800 transition">
           สมัครสมาชิก
         </button>
       </div>
@@ -57,64 +65,80 @@
           <div class="relative">
             <input type="password" id="login-password" required placeholder="กรอกรหัสผ่านของคุณ"
               class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-4 pr-11 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-[#134E6F] focus:bg-white transition" />
-            <button type="button" onclick="togglePassword('login-password', this)" class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-700 p-0.5">
+            <button type="button" onclick="togglePassword('login-password', this)"
+              class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-700 p-0.5">
               <i data-lucide="eye" class="w-4 h-4"></i>
             </button>
           </div>
         </div>
 
-        <button type="submit" id="btn-login" class="w-full bg-[#134E6F] hover:bg-[#0D3952] disabled:opacity-60 text-white font-medium text-sm py-3 rounded-xl shadow-sm transition">
+        <button type="submit" id="btn-login"
+          class="w-full bg-[#134E6F] hover:bg-[#0D3952] disabled:opacity-60 text-white font-medium text-sm py-3 rounded-xl shadow-sm transition">
           เข้าสู่ระบบ
         </button>
 
         <div class="pt-4 border-t border-slate-100">
           <p class="text-[11px] text-slate-400 mb-2 text-center">คลิกเพื่อกรอกบัญชีทดสอบระบบ (Demo):</p>
           <div class="grid grid-cols-2 gap-2">
-            <button type="button" onclick="fillDemo('admin@medpoint.com')" class="text-xs py-2 px-3 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 font-medium transition">
+            <button type="button" onclick="fillDemo('admin@medpoint.com')"
+              class="text-xs py-2 px-3 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 font-medium transition">
               บัญชี Admin
             </button>
-            <button type="button" onclick="fillDemo('tj@medpoint.com')" class="text-xs py-2 px-3 rounded-xl bg-[#DCEEF7]/70 hover:bg-[#DCEEF7] text-[#134E6F] border border-[#B3D8EC] font-medium transition">
+            <button type="button" onclick="fillDemo('tj@medpoint.com')"
+              class="text-xs py-2 px-3 rounded-xl bg-[#DCEEF7]/70 hover:bg-[#DCEEF7] text-[#134E6F] border border-[#B3D8EC] font-medium transition">
               บัญชี Patient (TJ)
             </button>
+            <button type="button" onclick="fillDemo('doctor.somchai@medpoint.com', '')"
+              class="col-span-2 rounded-xl border border-[#B3D8EC] bg-[#DCEEF7]/70 px-3 py-2 text-xs font-medium text-[#134E6F] transition hover:bg-[#DCEEF7]">
+              บัญชี Doctor (Demo)
+            </button>
+
           </div>
         </div>
       </form>
 
       <!-- ================= ฟอร์ม Register (สำหรับผู้ป่วยเท่านั้น) ================= -->
       <form id="form-register" onsubmit="handleRegister(event)" novalidate class="hidden space-y-3.5">
-        <div class="bg-[#DCEEF7]/60 border border-[#B3D8EC] rounded-xl p-3 flex items-start gap-2.5 text-[11px] text-[#0F354A]">
+        <div
+          class="bg-[#DCEEF7]/60 border border-[#B3D8EC] rounded-xl p-3 flex items-start gap-2.5 text-[11px] text-[#0F354A]">
           <i data-lucide="info" class="w-4 h-4 text-[#134E6F] shrink-0 mt-0.5"></i>
           <div>
-            สำหรับลงทะเบียน<b>ผู้ป่วย (Patient)</b> เท่านั้น — สำหรับแพทย์และบุคลากรทางการแพทย์ กรุณาติดต่อ <b>Admin</b> เพื่อตรวจสอบเอกสารและออกบัญชีผู้ใช้งาน
+            สำหรับลงทะเบียน<b>ผู้ป่วย (Patient)</b> เท่านั้น — สำหรับแพทย์และบุคลากรทางการแพทย์ กรุณาติดต่อ <b>Admin</b>
+            เพื่อตรวจสอบเอกสารและออกบัญชีผู้ใช้งาน
           </div>
         </div>
 
         <div>
-          <label class="block text-xs font-medium text-slate-600 mb-1">ชื่อ - นามสกุล <span class="text-rose-500">*</span></label>
+          <label class="block text-xs font-medium text-slate-600 mb-1">ชื่อ - นามสกุล <span
+              class="text-rose-500">*</span></label>
           <input type="text" id="reg-name" required placeholder="เช่น รวิตรา มั่งมี"
             class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#134E6F] focus:bg-white" />
         </div>
 
         <div>
-          <label class="block text-xs font-medium text-slate-600 mb-1">อีเมล <span class="text-rose-500">*</span></label>
+          <label class="block text-xs font-medium text-slate-600 mb-1">อีเมล <span
+              class="text-rose-500">*</span></label>
           <input type="email" id="reg-email" required placeholder="user@medpoint.com"
             class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#134E6F] focus:bg-white" />
         </div>
 
         <div>
-          <label class="block text-xs font-medium text-slate-600 mb-1">เบอร์โทรศัพท์มือถือ <span class="text-rose-500">*</span></label>
+          <label class="block text-xs font-medium text-slate-600 mb-1">เบอร์โทรศัพท์มือถือ <span
+              class="text-rose-500">*</span></label>
           <input type="tel" id="reg-phone" required maxlength="10" placeholder="0812345678 (10 หลัก)"
             oninput="this.value = this.value.replace(/[^0-9]/g, '')"
             class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#134E6F] focus:bg-white" />
         </div>
 
         <div>
-          <label class="block text-xs font-medium text-slate-600 mb-1">รหัสผ่าน <span class="text-rose-500">*</span></label>
+          <label class="block text-xs font-medium text-slate-600 mb-1">รหัสผ่าน <span
+              class="text-rose-500">*</span></label>
           <div class="relative">
             <input type="password" id="reg-password" required placeholder="อย่างน้อย 8 ตัวอักษร (ตัวอักษร + ตัวเลข)"
               oninput="validatePasswordLive()"
               class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-4 pr-11 py-2.5 text-sm focus:outline-none focus:border-[#134E6F] focus:bg-white" />
-            <button type="button" onclick="togglePassword('reg-password', this)" class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-700 p-0.5">
+            <button type="button" onclick="togglePassword('reg-password', this)"
+              class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-700 p-0.5">
               <i data-lucide="eye" class="w-4 h-4"></i>
             </button>
           </div>
@@ -130,19 +154,22 @@
         </div>
 
         <div>
-          <label class="block text-xs font-medium text-slate-600 mb-1">ยืนยันรหัสผ่านอีกครั้ง <span class="text-rose-500">*</span></label>
+          <label class="block text-xs font-medium text-slate-600 mb-1">ยืนยันรหัสผ่านอีกครั้ง <span
+              class="text-rose-500">*</span></label>
           <div class="relative">
             <input type="password" id="reg-confirm-password" required placeholder="กรอกรหัสผ่านให้ตรงกัน"
               oninput="validatePasswordLive()"
               class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-4 pr-11 py-2.5 text-sm focus:outline-none focus:border-[#134E6F] focus:bg-white" />
-            <button type="button" onclick="togglePassword('reg-confirm-password', this)" class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-700 p-0.5">
+            <button type="button" onclick="togglePassword('reg-confirm-password', this)"
+              class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-700 p-0.5">
               <i data-lucide="eye" class="w-4 h-4"></i>
             </button>
           </div>
           <p id="chk-match" class="text-[11px] mt-1 text-slate-400 hidden"></p>
         </div>
 
-        <button type="submit" id="btn-register" class="w-full bg-[#134E6F] hover:bg-[#0D3952] disabled:opacity-60 text-white font-medium text-sm py-3 rounded-xl shadow-sm transition mt-2">
+        <button type="submit" id="btn-register"
+          class="w-full bg-[#134E6F] hover:bg-[#0D3952] disabled:opacity-60 text-white font-medium text-sm py-3 rounded-xl shadow-sm transition mt-2">
           สมัครสมาชิก
         </button>
       </form>
@@ -210,17 +237,18 @@
       }
     }
 
-    function fillDemo(email) {
+
+    function fillDemo(email, password = '123456') {
       document.getElementById('login-email').value = email;
-      document.getElementById('login-password').value = '123456';
+      document.getElementById('login-password').value = password;
       document.getElementById('alert-box').classList.add('hidden');
     }
 
+
     function showAlert(msg, isError = false) {
       const box = document.getElementById('alert-box');
-      box.className = `mb-4 p-3.5 rounded-xl text-xs font-medium flex items-start gap-2 ${
-        isError ? 'bg-rose-50 text-rose-700 border border-rose-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-      }`;
+      box.className = `mb-4 p-3.5 rounded-xl text-xs font-medium flex items-start gap-2 ${isError ? 'bg-rose-50 text-rose-700 border border-rose-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+        }`;
       box.innerHTML = `
         <i data-lucide="${isError ? 'alert-circle' : 'check-circle-2'}" class="w-4 h-4 shrink-0 mt-0.5"></i>
         <span>${msg}</span>
@@ -342,4 +370,5 @@
     if (new URLSearchParams(window.location.search).get('tab') === 'register') switchTab('register');
   </script>
 </body>
+
 </html>
