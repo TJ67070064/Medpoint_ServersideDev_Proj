@@ -198,4 +198,5 @@ const swaggerDocument = {
   },
 };
 
+Object.assign(swaggerDocument.paths, require('./queueSwagger'));
 module.exports = swaggerDocument;

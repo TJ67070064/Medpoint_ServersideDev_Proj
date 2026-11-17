@@ -275,7 +275,10 @@
 
         localStorage.setItem('medpoint_token', data.token);
         localStorage.setItem('medpoint_user', JSON.stringify(data.user));
-        window.location.href = '/index.html';
+        const requestedNext = new URLSearchParams(window.location.search).get('next');
+        const canManageQueue = ['ADMIN', 'DOCTOR_STAFF'].includes(data.user.role);
+        window.location.href = canManageQueue && (requestedNext === '/queue.html' || !requestedNext)
+          ? '/queue.html' : '/index.html';
       } catch (err) {
         btn.disabled = false;
         btn.textContent = 'เข้าสู่ระบบ';
@@ -336,6 +339,7 @@
         showAlert('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้', true);
       }
     }
+    if (new URLSearchParams(window.location.search).get('tab') === 'register') switchTab('register');
   </script>
 </body>
 </html>
