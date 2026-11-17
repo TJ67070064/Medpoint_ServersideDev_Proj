@@ -81,6 +81,7 @@ function renderNavbar(activePage) {
           <a href="/index.html" class="${linkClass('home')}">หน้าหลัก</a>
           <a href="/screening.html" class="${linkClass('screening')}">คัดกรองอาการ</a>
           <a href="/services.html" class="${linkClass('services')}">บริการและแพ็กเกจ</a>
+          ${user && user.role === 'PATIENT' ? `<a href="/patient-queue.html" class="${linkClass('patient-queue')}">ติดตามคิวของฉัน</a>` : ''}
           ${canManageQueue ? `<a href="/queue.html" class="${linkClass('queue')}">จัดการคิวตรวจ</a>` : ''}
           ${
             isAdmin
@@ -117,6 +118,7 @@ function renderNavbar(activePage) {
                   <div class="pt-2 space-y-1">
                     <a href="/services.html" class="block px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-lg">บริการและแพ็กเกจ</a>
                     <a href="/screening.html" class="block px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-lg">แบบฟอร์มคัดกรอง</a>
+                    ${user && user.role === 'PATIENT' ? '<a href="/patient-queue.html" class="block px-3 py-2 text-sm text-[#134E6F] hover:bg-slate-50 rounded-lg">ติดตามคิวของฉัน</a>' : ''}
                     ${canManageQueue ? '<a href="/queue.html" class="block px-3 py-2 text-sm text-[#134E6F] hover:bg-slate-50 rounded-lg">จัดการคิวตรวจ</a>' : ''}
                     ${
                       isAdmin
@@ -147,6 +149,8 @@ function renderNavbar(activePage) {
         <a href="/index.html" class="px-3 py-1.5 rounded-lg hover:bg-slate-100 text-slate-700">หน้าหลัก</a>
         <a href="/screening.html" class="px-3 py-1.5 rounded-lg hover:bg-slate-100 text-slate-700">คัดกรองอาการเบื้องต้น</a>
         <a href="/services.html" class="px-3 py-1.5 rounded-lg hover:bg-slate-100 text-slate-700">บริการและแพ็กเกจ</a>
+        ${user && user.role === 'PATIENT' ? '<a href="/patient-queue.html" class="px-3 py-1.5 rounded-lg hover:bg-slate-100 text-slate-700">ติดตามคิวของฉัน</a>' : ''}
+
         ${canManageQueue ? '<a href="/queue.html" class="px-3 py-1.5 rounded-lg hover:bg-slate-100 text-slate-700">จัดการคิวตรวจ</a>' : ''}
         ${
           isAdmin

@@ -25,6 +25,7 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/services', serviceRoutes);
 app.use('/api/v1/screenings', screeningRoutes);
 app.use('/api/v1/queue', queueRoutes);
+app.use('/api/v1/patient-queue', require('./routes/patientQueueRoutes'));
 
 const PORT = process.env.PORT || 5000;
 if (require.main === module) app.listen(PORT, () => {

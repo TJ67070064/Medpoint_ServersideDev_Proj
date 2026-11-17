@@ -199,4 +199,5 @@ const swaggerDocument = {
 };
 
 Object.assign(swaggerDocument.paths, require('./queueSwagger'));
+Object.assign(swaggerDocument.paths, require('./patientQueueSwagger'));
 module.exports = swaggerDocument;
