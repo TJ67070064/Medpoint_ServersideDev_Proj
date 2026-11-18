@@ -17,15 +17,42 @@ async function getLinkedDoctorId(req) {
     // ข้ามไปค้นหาในฐานข้อมูลต่อ
   }
 
-  const doctor = await prisma.doctor.findFirst({
+  // ดึงชื่อจริงของบัญชีหมอจากตาราง User
+  const user = await prisma.user.findUnique({
+    where: { id: req.user.id },
+    select: { id: true, full_name: true, phone: true },
+  });
+  if (!user) return null;
+
+  const cleanName = (user.full_name || '').trim();
+  const coreName = cleanName.replace(/^(นพ\.|พญ\.|หมอ|ดร\.)\s*/g, '').trim();
+
+  // ค้นหาโปรไฟล์แพทย์จาก ID, ชื่อเต็ม หรือชื่อที่ตัดคำนำหน้าออก
+  let doctor = await prisma.doctor.findFirst({
     where: {
       OR: [
-        { id: req.user.id },
-        ...(req.user.full_name ? [{ docName: req.user.full_name }] : []),
+        { id: user.id },
+        ...(cleanName ? [{ docName: cleanName }] : []),
+        ...(coreName && coreName.length >= 2 ? [{ docName: { contains: coreName } }] : []),
       ],
     },
     select: { id: true },
   });
+
+  // หากยังไม่มีโปรไฟล์ในตาราง Doctor ให้สร้างผูกให้อัตโนมัติ
+  if (!doctor && cleanName) {
+    doctor = await prisma.doctor.create({
+      data: {
+        id: user.id,
+        docName: cleanName,
+        specialization: 'อายุรกรรมทั่วไป',
+        department: 'แผนกอายุรกรรม',
+        phone: user.phone || '-',
+        status: 'active',
+      },
+      select: { id: true },
+    });
+  }
 
   return doctor ? doctor.id : null;
 }

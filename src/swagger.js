@@ -61,6 +61,14 @@ const swaggerDocument = {
         responses: { 200: { description: 'OK' } },
       },
     },
+    '/api/v1/auth/me': {
+      get: {
+        tags: ['Auth'],
+        summary: 'ตรวจสอบ Token และดูข้อมูลผู้ใช้ปัจจุบัน (Authenticated)',
+        security: [{ bearerAuth: [] }],
+        responses: { 200: { description: 'OK' }, 401: { description: 'Unauthorized' } },
+      },
+    },
     '/api/v1/services': {
       get: {
         tags: ['Services'],
@@ -130,28 +138,6 @@ const swaggerDocument = {
     '/api/v1/screenings': {
       post: {
         tags: ['Screenings'],
-        summary: 'ส่งแบบฟอร์มคัดกรองอาการเบื้องต้น (Patient)',
-        security: [{ bearerAuth: [] }],
-        requestBody: {
-          required: true,
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  complaint: { type: 'string', example: 'เจ็บหน้าอก' },
-                  answerYes: { type: 'boolean', example: true },
-                },
-              },
-            },
-          },
-        },
-        responses: { 201: { description: 'Created' } },
-      },
-    },
-    '/api/v1/screenings': {
-      post: {
-        tags: ['Screenings'],
         summary: 'ส่งแบบฟอร์มคัดกรองอาการแบบละเอียด (Patient)',
         security: [{ bearerAuth: [] }],
         requestBody: {
@@ -187,17 +173,11 @@ const swaggerDocument = {
         responses: { 200: { description: 'OK' } },
       },
     },
-    '/api/v1/auth/me': {
-      get: {
-        tags: ['Auth'],
-        summary: 'ตรวจสอบ Token และดูข้อมูลผู้ใช้ปัจจุบัน (Authenticated)',
-        security: [{ bearerAuth: [] }],
-        responses: { 200: { description: 'OK' }, 401: { description: 'Unauthorized' } },
-      },
-    },
   },
 };
 
 Object.assign(swaggerDocument.paths, require('./queueSwagger'));
 Object.assign(swaggerDocument.paths, require('./patientQueueSwagger'));
+Object.assign(swaggerDocument.paths, require('./appointmentSwagger.js'));
+
 module.exports = swaggerDocument;

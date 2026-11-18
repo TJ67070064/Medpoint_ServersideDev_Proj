@@ -148,7 +148,17 @@ const getMe = async (req, res) => {
 // 4. [ADMIN ONLY] ตรวจสอบและสร้างบัญชีให้ แพทย์ / เจ้าหน้าที่ หรือ Admin (POST /api/v1/auth/users)
 const createStaffAccount = async (req, res) => {
   try {
-    const { full_name, email, password, phone, role, licenseNumber, verified } = req.body;
+    const {
+      full_name,
+      email,
+      password,
+      phone,
+      role,
+      licenseNumber,
+      verified,
+      specialization,
+      department,
+    } = req.body;
 
     if (!verified) {
       return res.status(400).json({
@@ -189,15 +199,40 @@ const createStaffAccount = async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+    const trimmedName = full_name.trim();
 
-    const newStaff = await prisma.user.create({
-      data: {
-        full_name: full_name.trim(),
-        email: normalizedEmail,
-        password: hashedPassword,
-        phone: normalizedPhone,
-        role: targetRole,
-      },
+    // สร้างบัญชีในตาราง User และหากเป็น DOCTOR_STAFF ให้สร้างข้อมูลแพทย์ในตาราง Doctor ควบคู่กันทันที
+    const newStaff = await prisma.$transaction(async (tx) => {
+      const createdUser = await tx.user.create({
+        data: {
+          full_name: trimmedName,
+          email: normalizedEmail,
+          password: hashedPassword,
+          phone: normalizedPhone,
+          role: targetRole,
+        },
+      });
+
+      if (targetRole === 'DOCTOR_STAFF') {
+        const existingDoctor = await tx.doctor.findFirst({
+          where: { docName: trimmedName },
+        });
+
+        if (!existingDoctor) {
+          await tx.doctor.create({
+            data: {
+              id: createdUser.id, // ใช้ ID เดียวกันเพื่อให้เชื่อมกับหน้าคิวและหน้าแพทย์อัตโนมัติ
+              docName: trimmedName,
+              specialization: (specialization || 'อายุรกรรมทั่วไป').trim(),
+              department: (department || 'แผนกอายุรกรรม').trim(),
+              phone: normalizedPhone,
+              status: 'active',
+            },
+          });
+        }
+      }
+
+      return createdUser;
     });
 
     res.status(201).json({

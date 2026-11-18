@@ -52,7 +52,7 @@
           <form id="staff-form" onsubmit="createStaff(event)" class="space-y-3.5">
             <div>
               <label class="block text-xs font-medium text-slate-600 mb-1">ประเภทบัญชี (Role) <span class="text-rose-500">*</span></label>
-              <select id="stf-role" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-[#134E6F] focus:bg-white">
+              <select id="stf-role" onchange="toggleDoctorFields()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-[#134E6F] focus:bg-white">
                 <option value="DOCTOR_STAFF">แพทย์ / เจ้าหน้าที่คลินิก (DOCTOR_STAFF)</option>
                 <option value="ADMIN">ผู้ดูแลระบบ (ADMIN)</option>
               </select>
@@ -68,6 +68,26 @@
               <label class="block text-xs font-medium text-slate-600 mb-1">เลขที่ใบประกอบวิชาชีพ / รหัสพนักงาน</label>
               <input type="text" id="stf-license" placeholder="เช่น ว.54321 หรือ EMP-009"
                 class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-[#134E6F] focus:bg-white" />
+            </div>
+
+            <!-- ข้อมูลโปรไฟล์แพทย์ (แสดงเฉพาะเมื่อเลือก DOCTOR_STAFF) -->
+            <div id="doctor-fields" class="space-y-3.5 pt-1 border-t border-slate-100">
+              <div>
+                <label class="block text-xs font-medium text-slate-600 mb-1">แผนกประจำคลินิก <span class="text-rose-500">*</span></label>
+                <select id="stf-department" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-[#134E6F] focus:bg-white">
+                  <option value="แผนกอายุรกรรม">แผนกอายุรกรรม</option>
+                  <option value="แผนกกุมารเวชกรรม">แผนกกุมารเวชกรรม</option>
+                  <option value="แผนกศัลยกรรม">แผนกศัลยกรรม</option>
+                  <option value="แผนกทันตกรรม">แผนกทันตกรรม</option>
+                  <option value="แผนกเวชปฏิบัติทั่วไป">แผนกเวชปฏิบัติทั่วไป</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-xs font-medium text-slate-600 mb-1">สาขาความเชี่ยวชาญ <span class="text-rose-500">*</span></label>
+                <input type="text" id="stf-specialization" placeholder="เช่น อายุรศาสตร์โรคหัวใจ, อายุรกรรมทั่วไป"
+                  class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-[#134E6F] focus:bg-white" />
+              </div>
             </div>
 
             <div>
@@ -133,6 +153,16 @@
       loadUsers();
     }
 
+    function toggleDoctorFields() {
+      const role = document.getElementById('stf-role').value;
+      const docFields = document.getElementById('doctor-fields');
+      if (role === 'DOCTOR_STAFF') {
+        docFields.classList.remove('hidden');
+      } else {
+        docFields.classList.add('hidden');
+      }
+    }
+
     function showAlert(msg, isError = false) {
       const box = document.getElementById('alert-box');
       box.textContent = msg;
@@ -181,10 +211,13 @@
 
     async function createStaff(e) {
       e.preventDefault();
+      const role = document.getElementById('stf-role').value;
       const payload = {
-        role: document.getElementById('stf-role').value,
+        role,
         full_name: document.getElementById('stf-name').value.trim(),
         licenseNumber: document.getElementById('stf-license').value.trim(),
+        department: role === 'DOCTOR_STAFF' ? document.getElementById('stf-department').value : undefined,
+        specialization: role === 'DOCTOR_STAFF' ? document.getElementById('stf-specialization').value.trim() : undefined,
         email: document.getElementById('stf-email').value.trim(),
         phone: document.getElementById('stf-phone').value.trim(),
         password: document.getElementById('stf-password').value,
@@ -214,6 +247,7 @@
         }
 
         document.getElementById('staff-form').reset();
+        toggleDoctorFields();
         showAlert(data.message);
         loadUsers();
       } catch (err) {
