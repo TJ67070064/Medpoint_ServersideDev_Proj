@@ -15,5 +15,5 @@ router.use(async (req, res, next) => {
   } catch { return res.status(503).json({ message: 'ตรวจสอบสิทธิ์ไม่สำเร็จ กรุณาลองใหม่' }); }
 });
 router.get('/', listQueue);
-router.patch('/:id/status', updateQueueStatus);
+router.patch('/:id/status', authorizeRoles('DOCTOR_STAFF'), updateQueueStatus);
 module.exports = router;
