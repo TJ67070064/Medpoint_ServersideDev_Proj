@@ -1,31 +1,34 @@
 const prisma = require('../prisma');
 
-
-function getLinkedDoctorId(req) {
+async function getLinkedDoctorId(req) {
   if (req.user?.role !== 'DOCTOR_STAFF') {
     return null;
   }
 
-  let doctorMap;
-
   try {
-    doctorMap = JSON.parse(process.env.DOCTOR_USER_MAP || '{}');
+    const doctorMap = JSON.parse(process.env.DOCTOR_USER_MAP || '{}');
+    if (doctorMap && typeof doctorMap === 'object' && !Array.isArray(doctorMap)) {
+      const mappedId = doctorMap[req.user.id];
+      if (typeof mappedId === 'string' && mappedId.trim()) {
+        return mappedId;
+      }
+    }
   } catch {
-    return null;
+    // ข้ามไปค้นหาในฐานข้อมูลต่อ
   }
 
-  if (!doctorMap || typeof doctorMap !== 'object' ||
-    Array.isArray(doctorMap)) {
-    return null;
-  }
+  const doctor = await prisma.doctor.findFirst({
+    where: {
+      OR: [
+        { id: req.user.id },
+        ...(req.user.full_name ? [{ docName: req.user.full_name }] : []),
+      ],
+    },
+    select: { id: true },
+  });
 
-  const doctorId = doctorMap[req.user.id];
-
-  return typeof doctorId === 'string' && doctorId.trim()
-    ? doctorId
-    : null;
+  return doctor ? doctor.id : null;
 }
-
 
 const DISPLAY = { confirmed: 'waiting', in_progress: 'in_progress', completed: 'completed' };
 const APPOINTMENT_SELECT = {
@@ -58,7 +61,7 @@ async function listQueue(req, res) {
   const limit = positiveInt(req.query.limit, 5, 50);
   const { status, q, doctorId, department } = req.query;
   const isDoctor = req.user.role === 'DOCTOR_STAFF';
-  const linkedDoctorId = isDoctor ? getLinkedDoctorId(req) : null;
+  const linkedDoctorId = isDoctor ? await getLinkedDoctorId(req) : null;
 
   if (isDoctor && !linkedDoctorId) {
     return res.status(403).json({
@@ -133,7 +136,7 @@ class QueueError extends Error {
 }
 
 async function updateQueueStatus(req, res) {
-  const linkedDoctorId = getLinkedDoctorId(req);
+  const linkedDoctorId = await getLinkedDoctorId(req);
   if (!linkedDoctorId) {
     return res.status(403).json({
       message: 'บัญชีนี้ยังไม่ได้ผูกกับข้อมูลแพทย์'
@@ -145,7 +148,6 @@ async function updateQueueStatus(req, res) {
     return res.status(400).json({
       message: 'สถานะที่ส่งได้คือ confirmed, in_progress หรือ completed เท่านั้น'
     });
-
   }
   try {
     const found = await prisma.appointment.findUnique({ where: { id: req.params.id }, select: { doctorId: true } });
