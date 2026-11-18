@@ -33,6 +33,7 @@ app.use('/api/v1/doctors', doctorRoutes);
 app.use('/api/v1/appointments', appointmentRoutes);
 app.use('/api/v1/appointments', bookingRoutes);
 app.use('/api/v1/admin', adminDoctorRoutes);
+app.use('/api/v1/patient-queue', require('./routes/patientQueueRoutes'));
 
 const PORT = process.env.PORT || 5000;
 if (require.main === module) app.listen(PORT, () => {
